@@ -16,7 +16,6 @@ Available targets:
   template          - Generate Kubernetes manifests from templates
   apply             - Apply generated manifests to the Kubernetes cluster
   delete            - Delete Kubernetes resources defined in the manifests
-  kubescore         - Run kube-score against the generated manifests
   validate-%        - Validate a specific manifest using yq
   print-%           - Print the value of a specific variable
   get-vault-ui      - Fetch the Vault UI Node IP and NodePort

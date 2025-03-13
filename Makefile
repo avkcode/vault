@@ -14,7 +14,6 @@ help:
 	@echo "  template          - Generate Kubernetes manifests from templates"
 	@echo "  apply             - Apply generated manifests to the Kubernetes cluster"
 	@echo "  delete            - Delete Kubernetes resources defined in the manifests"
-	@echo "  kubescore         - Run kube-score against the generated manifests"
 	@echo "  validate-%        - Validate a specific manifest using yq"
 	@echo "  print-%           - Print the value of a specific variable"
 	@echo "  get-vault-ui      - Fetch the Vault UI Node IP and NodePort"
