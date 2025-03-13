@@ -279,23 +279,23 @@ manifests += $${statefulset}
 
 .PHONY: template apply delete
 
-# Template Target: Outputs the generated Kubernetes manifests to the console.
+# Outputs the generated Kubernetes manifests to the console.
 template:
 	@$(foreach manifest,$(manifests),echo "$(manifest)";)
 
-# Apply Target: Applies the generated Kubernetes manifests to the cluster using `kubectl apply`.
+# Applies the generated Kubernetes manifests to the cluster using `kubectl apply`.
 apply: create-release
 	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl apply -f - ;)
 
-# Delete Target: Deletes the Kubernetes resources defined in the generated manifests using `kubectl delete`.
+# Deletes the Kubernetes resources defined in the generated manifests using `kubectl delete`.
 delete: remove-release
 	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl delete -f - ;)
 
-# Validate-% Target: Validates a specific manifest using `yq`.
+# Validates a specific manifest using `yq`.
 validate-%:
 	@echo "$$$*" | yq eval -P '.' -
 
-# Print-% Target: Prints the value of a specific variable.
+# Prints the value of a specific variable.
 print-%:
 	@echo "$$$*"
 
@@ -304,7 +304,7 @@ VAULT_IMAGE_NAME ?= vault
 VAULT_IMAGE_TAG  ?= latest
 DOCKERFILE_PATH  ?= ./Dockerfile
 
-# New target to build the Vault Docker image
+# Build the Vault Docker image
 .PHONY: build-vault-image
 build-vault-image:
 	@echo "Building Vault Docker image..."
@@ -359,14 +359,14 @@ switch-namespace:
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 
-# Target: Create git archive
+# Create git archive
 .PHONY: archive
 archive:
 	@echo "Creating git archive..."
 	git archive --format=tar.gz --output=archive-$(GIT_BRANCH)-$(GIT_COMMIT).tar.gz HEAD
 	@echo "Archive created: archive-$(GIT_BRANCH)-$(GIT_COMMIT).tar.gz"
 
-# Target: Create git bundle
+# Create git bundle
 .PHONY: bundle
 bundle:
 	@echo "Creating git bundle..."
@@ -378,7 +378,7 @@ bundle:
 clean:
 	@rm -f archive-*.tar.gz bundle-*.bundle
 
-# Target: Create a Git tag and release on GitHub
+# Create a Git tag and release on GitHub
 .PHONY: release
 release:
 	@echo "Creating Git tag and releasing on GitHub..."
