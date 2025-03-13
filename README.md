@@ -4,23 +4,23 @@ When you run make apply, several steps are executed in sequence to apply the Kub
 
 ```
 +-------------------+
-|   make apply       |
+|   make apply      |
 +-------------------+
           |
           v
 +-------------------+
-| 1. Create Release  |
-|   - Generates a    |
-|     Kubernetes     |
-|     secret with    |
-|     VERSION set    |
-|     to Git commit  |
-|     SHA.           |
+| 1. Create Release |
+|   - Generates a   |
+|     Kubernetes    |
+|     secret with   |
+|     VERSION set   |
+|     to Git commit |
+|     SHA.          |
 +-------------------+
           |
           v
-+-------------------+
-| 2. Apply Manifests|
++--------------------+
+| 2. Apply Manifests |
 |   - Iterates over  |
 |     the list of    |
 |     manifests      |
@@ -32,7 +32,7 @@ When you run make apply, several steps are executed in sequence to apply the Kub
 |     the cluster    |
 |     using kubectl  |
 |     apply.         |
-+-------------------+
++--------------------+
           |
           v
 +-------------------+
