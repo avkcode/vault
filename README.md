@@ -1,3 +1,9 @@
+# Real-world example of replacing Helm and other tools with just Make.
+
+## Rational
+
+Using Make instead of Helm or other tools offers greater flexibility due to its simplicity and adaptability. Make allows for dynamic generation of Kubernetes manifests tailored to specific environments through parameterized variables, enabling precise control over configurations without the overhead of a more complex tool. Unlike Helm, which relies on templating and predefined charts, Make provides unrestricted customization, allowing users to define bespoke workflows and integrate with any command-line tooling seamlessly. Additionally, Make's conditional logic and dependency management enable efficient handling of environment-specific parameters and tasks, making it an ideal choice for projects requiring high customization and minimal abstraction.
+
 ## Workflow
 
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.
