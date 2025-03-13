@@ -82,7 +82,6 @@ Every time you run make apply, the Makefile is designed to automatically trigger
 
 - global.param - contains validation checks 
 - dev.param - enviroment variables
-```
 
 ## Unseal Script and Dockerfile
 
