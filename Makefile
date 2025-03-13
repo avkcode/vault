@@ -34,7 +34,10 @@ help:
 ##########
 
 ENV ?= dev
+# This allows users to override the ENV variable by passing it as an argument to `make`.
+
 ALLOWED_ENVS := global dev sit uat prod
+# Define a list of allowed environments. These are the valid values for the ENV variable.
 
 ifeq ($(filter $(ENV),$(ALLOWED_ENVS)),)
     $(error Invalid ENV value '$(ENV)'. Allowed values are: $(ALLOWED_ENVS))
@@ -45,6 +48,7 @@ ifeq ($(wildcard $(PARAM_FILE)),)
 	$(error Parameter file for environment '$(ENV)' not found: $(PARAM_FILE))
 endif
 include $(PARAM_FILE)
+# This ensures that only predefined environments can be used.
 
 ##########
 ##########
@@ -274,24 +278,25 @@ manifests += $${configmap}
 manifests += $${services}
 manifests += $${statefulset}
 
-##########
-##########
+.PHONY: template apply delete
 
+# Template Target: Outputs the generated Kubernetes manifests to the console.
 template:
 	@$(foreach manifest,$(manifests),echo "$(manifest)";)
 
+# Apply Target: Applies the generated Kubernetes manifests to the cluster using `kubectl apply`.
 apply:
 	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl apply -f - ;)
 
+# Delete Target: Deletes the Kubernetes resources defined in the generated manifests using `kubectl delete`.
 delete:
 	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl delete -f - ;)
 
-kubescore:
-	@$(foreach manifest,$(manifests),echo "$(manifest)" | kube-score score - ;)
-
+# Validate-% Target: Validates a specific manifest using `yq`.
 validate-%:
 	@echo "$$$*" | yq eval -P '.' -
 
+# Print-% Target: Prints the value of a specific variable.
 print-%:
 	@echo "$$$*"
 
@@ -301,11 +306,13 @@ VAULT_IMAGE_TAG  ?= latest
 DOCKERFILE_PATH  ?= ./Dockerfile
 
 # New target to build the Vault Docker image
+.PHONY: build-vault-image
 build-vault-image:
 	@echo "Building Vault Docker image..."
 	@docker build -t $(VAULT_IMAGE_NAME):$(VAULT_IMAGE_TAG) -f $(DOCKERFILE_PATH) .
 	@echo "Vault Docker image built successfully: $(VAULT_IMAGE_NAME):$(VAULT_IMAGE_TAG)"
 
+.PHONY: get-vault-ui
 get-vault-ui:
 	@echo "Fetching Vault UI Node IP and NodePort..."
 	@NODE_PORT=$$(kubectl get svc -o jsonpath='{.items[?(@.spec.ports[].name=="http")].spec.ports[?(@.name=="http")].nodePort}'); \
@@ -315,6 +322,7 @@ get-vault-ui:
 	fi; \
 	echo "Vault UI is accessible at: http://$$NODE_IP:$$NODE_PORT"
 
+.PHONY: get-vault-keys
 get-vault-keys:
 	kubectl exec vault-0 -- vault operator init -key-shares=1 -key-threshold=1 -format=json > keys.json
 	VAULT_UNSEAL_KEY=$(cat keys.json | jq -r ".unseal_keys_b64[]")
@@ -322,6 +330,7 @@ get-vault-keys:
 	VAULT_ROOT_KEY=$(cat keys.json | jq -r ".root_token")
 	echo $VAULT_ROOT_KEY
 
+.PHONY: exec
 exec:
 	@kubectl exec -it vault-0 -- /bin/sh
 
