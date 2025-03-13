@@ -1,8 +1,37 @@
 # Real-world example of replacing Helm and other tools with just Make.
 
-## Rational
+Inspired by Rob Pike article [Less is exponentially more](https://commandcenter.blogspot.com/2012/06/less-is-exponentially-more.html)
+And Apple [Pkl tool](https://pkl-lang.org/blog/know-your-place.html)
 
-Using Make instead of Helm or other tools offers greater flexibility due to its simplicity and adaptability. Make allows for dynamic generation of Kubernetes manifests tailored to specific environments through parameterized variables, enabling precise control over configurations without the overhead of a more complex tool. Unlike Helm, which relies on templating and predefined charts, Make provides unrestricted customization, allowing users to define bespoke workflows and integrate with any command-line tooling seamlessly. Additionally, Make's conditional logic and dependency management enable efficient handling of environment-specific parameters and tasks, making it an ideal choice for projects requiring high customization and minimal abstraction.
+Pkl is an example of a complex tool, which is using DSL, type validation, IDE integration, complex templating. It’s built with “futamura projections” and stuff like that.. But is it possible that it could be replaced with just Make and some duct taping?
+
+This script can be used to deploy Hashicrop Vault to as many environments as necessary, with different sets of parameters. It can validate parameters and create releases just like Helm, but without any external tooling, just kubectl and Make.
+
+Here how it works:
+
+The Makefile has a bunch of **targets** (commands you can run). Each target does something specific, like creating Kubernetes files, deploying the app, or cleaning up. You run these targets using the `make`command. Running make without any targets outputs the help:
+```
+make
+Available targets:
+  template          - Generate Kubernetes manifests from templates
+  apply             - Apply generated manifests to the Kubernetes cluster
+  delete            - Delete Kubernetes resources defined in the manifests
+  kubescore         - Run kube-score against the generated manifests
+  validate-%        - Validate a specific manifest using yq
+  print-%           - Print the value of a specific variable
+  get-vault-ui      - Fetch the Vault UI Node IP and NodePort
+  build-vault-image - Build the Vault Docker image
+  exec              - Execute a shell in the vault-0 pod
+  logs              - Stream logs from the vault-0 pod
+  switch-namespace  - Switch the current Kubernetes namespace
+  archive           - Create a git archive
+  bundle            - Create a git bundle
+  clean             - Clean up generated files
+  release           - Create a Git tag and release on GitHub
+  get-vault-keys    - Initialize Vault and retrieve unseal and root keys
+  show-params       - Show contents of the parameter file for the current environment
+  help              - Display this help message
+```
 
 ## Workflow
 
@@ -48,6 +77,8 @@ When you run make apply, several steps are executed in sequence to apply the Kub
 |     applied       |
 |     resources.    |
 +-------------------+
+
+Every time you run make apply, the Makefile is designed to automatically trigger the create-release target as part of the process. This ensures that a Kubernetes secret is created with the current Git commit SHA, which helps track the version of the app being deployed. By including this step, the Makefile guarantees that the release information is always up-to-date and stored in the cluster whenever the manifests are applied. This makes it easier to identify which version of the app is running and maintain consistency across deployments. Make delete triggers remove-release target.
 ```
 
 ## Unseal Script and Dockerfile
