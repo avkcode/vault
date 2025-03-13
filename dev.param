@@ -1,0 +1,10 @@
+nameSpace := default
+dockerImage := hashicorp/vault:1.18.0
+
+replicaNum := 1
+
+sidecar.istio.io/inject: "true"
+
+injectIstioSidecar := "false"
+
+vaultUI := false
