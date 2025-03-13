@@ -1,9 +1,11 @@
-.PHONY: template
+# Check if DEBUG=1 is set, and conditionally add MAKEFLAGS
+ifeq ($(DEBUG),1)
+	MAKEFLAGS += --no-print-directory
+	MAKEFLAGS += --keep-going
+	MAKEFLAGS += --ignore-errors
+endif
 
-MAKEFLAGS += --no-print-directory
-MAKEFLAGS += --keep-going
-MAKEFLAGS += --ignore-errors
-
+# Default goal
 .DEFAULT_GOAL := help
 
 .PHONY: help
@@ -16,6 +18,16 @@ help:
 	@echo "  validate-%        - Validate a specific manifest using yq"
 	@echo "  print-%           - Print the value of a specific variable"
 	@echo "  get-vault-ui      - Fetch the Vault UI Node IP and NodePort"
+	@echo "  build-vault-image - Build the Vault Docker image"
+	@echo "  exec              - Execute a shell in the vault-0 pod"
+	@echo "  logs              - Stream logs from the vault-0 pod"
+	@echo "  switch-namespace  - Switch the current Kubernetes namespace"
+	@echo "  archive           - Create a git archive"
+	@echo "  bundle            - Create a git bundle"
+	@echo "  clean             - Clean up generated files"
+	@echo "  release           - Create a Git tag and release on GitHub"
+	@echo "  get-vault-keys    - Initialize Vault and retrieve unseal and root keys"
+	@echo "  show-params       - Show contents of the parameter file for the current environment"
 	@echo "  help              - Display this help message"
 
 ##########
@@ -43,7 +55,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: vault
-  namespace: ${nameSpace}
+  namespace: ${VAULT_NAMESPACE}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -56,7 +68,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: vault
-  namespace: ${nameSpace}
+  namespace: ${VAULT_NAMESPACE}
 endef
 export rbac
 
@@ -66,11 +78,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: vault-config
-  namespace: ${nameSpace}
+  namespace: ${VAULT_NAMESPACE}
 data:
   extraconfig-from-values.hcl: |-
     disable_mlock = true
-    ui = ${vaultUI}
+    ui = ${VAULT_UI}
     
     listener "tcp" {
       tls_disable = 1
@@ -80,6 +92,7 @@ data:
     storage "file" {
       path = "/vault/data"
     }
+    ${TELEMETRY_CONFIG}
 endef
 export configmap
 
@@ -89,14 +102,14 @@ apiVersion: v1
 kind: Service
 metadata:
   name: vault
-  namespace: ${nameSpace}
+  namespace: ${VAULT_NAMESPACE}
   labels:
     environment: ${ENV}
     app.kubernetes.io/name: vault
     app.kubernetes.io/instance: vault
   annotations:
 spec:
-  type: NodePort  
+  type: NodePort
   publishNotReadyAddresses: true
   ports:
     - name: http
@@ -115,7 +128,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: vault-internal
-  namespace: ${nameSpace}
+  namespace: ${VAULT_NAMESPACE}
   labels:
     environment: ${ENV}
     app.kubernetes.io/name: vault
@@ -143,14 +156,14 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: vault
-  namespace: ${nameSpace}
+  namespace: ${VAULT_NAMESPACE}
   labels:
     environment: ${ENV}
     app.kubernetes.io/name: vault
     app.kubernetes.io/instance: vault
 spec:
   serviceName: vault-internal
-  replicas: ${replicaNum}
+  replicas: ${REPLICA_NUM}
   selector:
     matchLabels:
       app.kubernetes.io/name: vault
@@ -164,7 +177,7 @@ spec:
         app.kubernetes.io/instance: vault
         component: server
       annotations:
-        sidecar.istio.io/inject: ${injectIstioSidecar}
+        sidecar.istio.io/inject: ${ENABLE_ISTIO_SIDECAR}
     spec:
       serviceAccountName: vault
       securityContext:
@@ -180,12 +193,12 @@ spec:
           emptyDir: {}
       containers:
         - name: vault
-          image: ${dockerImage}
+          image: ${DOCKER_IMAGE}
           imagePullPolicy: Always
           command:
           - "/bin/sh"
           - "-ec"
-          args: 
+          args:
           - |
             cp /vault/config/extraconfig-from-values.hcl /tmp/storageconfig.hcl;
             [ -n "$${HOST_IP}" ] && sed -Ei "s|HOST_IP|$${HOST_IP?}|g" /tmp/storageconfig.hcl;
@@ -194,7 +207,13 @@ spec:
             [ -n "$${API_ADDR}" ] && sed -Ei "s|API_ADDR|$${API_ADDR?}|g" /tmp/storageconfig.hcl;
             [ -n "$${TRANSIT_ADDR}" ] && sed -Ei "s|TRANSIT_ADDR|$${TRANSIT_ADDR?}|g" /tmp/storageconfig.hcl;
             [ -n "$${RAFT_ADDR}" ] && sed -Ei "s|RAFT_ADDR|$${RAFT_ADDR?}|g" /tmp/storageconfig.hcl;
-            /usr/local/bin/docker-entrypoint.sh vault server -config=/tmp/storageconfig.hcl     
+            /usr/local/bin/docker-entrypoint.sh vault server -config=/tmp/storageconfig.hcl
+          command:
+          - "/bin/sh"
+          - "-ec"
+          args:
+          - |
+            vault server -config=/vault/config
           securityContext:
             allowPrivilegeEscalation: false
           env:
@@ -216,7 +235,7 @@ spec:
               value: "/home/vault"
           volumeMounts:
             - name: data
-              mountPath: /vault/data  
+              mountPath: /vault/data
             - name: config
               mountPath: /vault/config
             - name: home
@@ -228,14 +247,13 @@ spec:
               name: https-internal
             - containerPort: 8202
               name: http-rep
-          readinessProbe:
-            exec:
-              command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
-            failureThreshold: 2
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            successThreshold: 1
-            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: ${VAULT_CPU_REQUEST}
+              memory: ${VAULT_MEMORY_REQUEST}
+            limits:
+              cpu: ${VAULT_CPU_LIMIT}
+              memory: ${VAULT_MEMORY_LIMIT}
   volumeClaimTemplates:
     - metadata:
         name: data
@@ -244,7 +262,7 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-             storage: 2Gi
+            storage: 2Gi
 endef
 export statefulset
 
@@ -255,6 +273,9 @@ manifests += $${rbac}
 manifests += $${configmap}
 manifests += $${services}
 manifests += $${statefulset}
+
+##########
+##########
 
 template:
 	@$(foreach manifest,$(manifests),echo "$(manifest)";)
@@ -281,9 +302,9 @@ DOCKERFILE_PATH  ?= ./Dockerfile
 
 # New target to build the Vault Docker image
 build-vault-image:
-    @echo "Building Vault Docker image..."
-    @docker build -t $(VAULT_IMAGE_NAME):$(VAULT_IMAGE_TAG) -f $(DOCKERFILE_PATH) .
-    @echo "Vault Docker image built successfully: $(VAULT_IMAGE_NAME):$(VAULT_IMAGE_TAG)"
+	@echo "Building Vault Docker image..."
+	@docker build -t $(VAULT_IMAGE_NAME):$(VAULT_IMAGE_TAG) -f $(DOCKERFILE_PATH) .
+	@echo "Vault Docker image built successfully: $(VAULT_IMAGE_NAME):$(VAULT_IMAGE_TAG)"
 
 get-vault-ui:
 	@echo "Fetching Vault UI Node IP and NodePort..."
@@ -293,3 +314,68 @@ get-vault-ui:
 		NODE_IP=$$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'); \
 	fi; \
 	echo "Vault UI is accessible at: http://$$NODE_IP:$$NODE_PORT"
+
+get-vault-keys:
+	kubectl exec vault-0 -- vault operator init -key-shares=1 -key-threshold=1 -format=json > keys.json
+	VAULT_UNSEAL_KEY=$(cat keys.json | jq -r ".unseal_keys_b64[]")
+	echo $VAULT_UNSEAL_KEY
+	VAULT_ROOT_KEY=$(cat keys.json | jq -r ".root_token")
+	echo $VAULT_ROOT_KEY
+
+exec:
+	@kubectl exec -it vault-0 -- /bin/sh
+
+.PHONY: logs
+logs:
+	@kubectl logs -f vault-0
+
+.PHONY: show-params
+show-params:
+	@echo "Contents of $(PARAM_FILE):"
+	@cat $(PARAM_FILE)
+
+.PHONY: switch-namespace
+switch-namespace:
+	@echo "Listing all available namespaces..."
+	@NAMESPACES=$$(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}'); \
+	echo "$$NAMESPACES"; \
+		read -p "Enter the namespace you want to switch to: " SELECTED_NAMESPACE; \
+		if echo "$$NAMESPACES" | grep -qw "$$SELECTED_NAMESPACE"; then \
+			kubectl config set-context --current --namespace=$$SELECTED_NAMESPACE; \
+			echo "Switched to namespace: $$SELECTED_NAMESPACE"; \
+		else \
+			echo "Error: Namespace '$$SELECTED_NAMESPACE' not found."; \
+		fi
+
+# Variables
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+
+# Target: Create git archive
+.PHONY: archive
+archive:
+	@echo "Creating git archive..."
+	git archive --format=tar.gz --output=archive-$(GIT_BRANCH)-$(GIT_COMMIT).tar.gz HEAD
+	@echo "Archive created: archive-$(GIT_BRANCH)-$(GIT_COMMIT).tar.gz"
+
+# Target: Create git bundle
+.PHONY: bundle
+bundle:
+	@echo "Creating git bundle..."
+	git bundle create bundle-$(GIT_BRANCH)-$(GIT_COMMIT).bundle --all
+	@echo "Bundle created: bundle-$(GIT_BRANCH)-$(GIT_COMMIT).bundle"
+
+# Clean up generated files
+.PHONY: clean
+clean:
+	@rm -f archive-*.tar.gz bundle-*.bundle
+
+# Target: Create a Git tag and release on GitHub
+.PHONY: release
+release:
+	@echo "Creating Git tag and releasing on GitHub..."
+	@read -p "Enter the version number (e.g., v1.0.0): " version; \
+	git tag -a $$version -m "Release $$version"; \
+	git push origin $$version; \
+	gh release create $$version --generate-notes
+	@echo "Release $$version created and pushed to GitHub."

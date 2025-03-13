@@ -1,0 +1,121 @@
+
+# Set default environment
+ENV ?= dev
+
+GIT_COMMIT_SHA256 = $(shell git rev-parse HEAD)
+
+# List of allowed environments
+ALLOWED_ENVS := dev sit uat prod
+
+# Validate ENV variable
+ifeq ($(filter $(ENV),$(ALLOWED_ENVS)),)
+    $(error Invalid ENV value '$(ENV)'. Allowed values are: $(ALLOWED_ENVS))
+endif
+
+# Define environment-specific parameter file
+PARAM_FILE := $(ENV).param
+
+# Check if parameter file exists
+ifeq ($(wildcard $(PARAM_FILE)),)
+    $(error Parameter file for environment '$(ENV)' not found: $(PARAM_FILE))
+endif
+
+# Include environment-specific parameter file
+include $(PARAM_FILE)
+
+# List of valid VAULT_NAMESPACE values
+VALID_VAULT_NAMESPACES := vault-prod vault-sit vault-uat vault-dev
+
+# Validate VAULT_NAMESPACE
+ifndef VAULT_NAMESPACE
+    $(error VAULT_NAMESPACE is not defined. Please set VAULT_NAMESPACE in the parameter files.)
+else ifeq ($(filter $(VAULT_NAMESPACE),$(VALID_VAULT_NAMESPACES)),)
+    $(error Invalid VAULT_NAMESPACE value '$(VAULT_NAMESPACE)'. Allowed values are: $(VALID_VAULT_NAMESPACES))
+endif
+
+# Validate mandatory environment variables
+ifndef CPU_REQUEST
+  $(error CPU_REQUEST is not set. Please export CPU_REQUEST.)
+endif
+ifndef MEMORY_REQUEST
+  $(error MEMORY_REQUEST is not set. Please export MEMORY_REQUEST.)
+endif
+ifndef CPU_LIMIT
+  $(error CPU_LIMIT is not set. Please export CPU_LIMIT.)
+endif
+ifndef MEMORY_LIMIT
+  $(error MEMORY_LIMIT is not set. Please export MEMORY_LIMIT.)
+endif
+
+# Validate mandatory environment variables
+ifndef CPU_REQUEST
+  $(error CPU_REQUEST is not set. Please export CPU_REQUEST.)
+endif
+ifndef MEMORY_REQUEST
+  $(error MEMORY_REQUEST is not set. Please export MEMORY_REQUEST.)
+endif
+ifndef CPU_LIMIT
+  $(error CPU_LIMIT is not set. Please export CPU_LIMIT.)
+endif
+ifndef MEMORY_LIMIT
+  $(error MEMORY_LIMIT is not set. Please export MEMORY_LIMIT.)
+endif
+
+# Validate CPU values (must end with 'm' for millicores)
+ifneq ($(findstring m,$(CPU_REQUEST)),m)
+  $(error Invalid CPU_REQUEST value '$(CPU_REQUEST)'. It must end with 'm' (e.g., 500m).)
+endif
+ifneq ($(findstring m,$(CPU_LIMIT)),m)
+  $(error Invalid CPU_LIMIT value '$(CPU_LIMIT)'. It must end with 'm' (e.g., 1000m).)
+endif
+
+# Validate CPU ranges (e.g., 100m <= CPU_REQUEST <= 2000m)
+CPU_REQUEST_VALUE := $(subst m,,$(CPU_REQUEST))
+ifeq ($(shell [ $(CPU_REQUEST_VALUE) -ge 100 ] && [ $(CPU_REQUEST_VALUE) -le 2000 ] && echo true),)
+  $(error Invalid CPU_REQUEST value '$(CPU_REQUEST)'. It must be between 100m and 2000m.)
+endif
+
+CPU_LIMIT_VALUE := $(subst m,,$(CPU_LIMIT))
+ifeq ($(shell [ $(CPU_LIMIT_VALUE) -ge 100 ] && [ $(CPU_LIMIT_VALUE) -le 2000 ] && echo true),)
+  $(error Invalid CPU_LIMIT value '$(CPU_LIMIT)'. It must be between 100m and 2000m.)
+endif
+
+# Validate memory values (must end with 'Mi' or 'Gi')
+ifneq ($(filter-out Mi Gi,$(suffix $(MEMORY_REQUEST))),)
+  $(error Invalid MEMORY_REQUEST value '$(MEMORY_REQUEST)'. It must end with 'Mi' or 'Gi' (e.g., 512Mi or 1Gi).)
+endif
+ifneq ($(filter-out Mi Gi,$(suffix $(MEMORY_LIMIT))),)
+  $(error Invalid MEMORY_LIMIT value '$(MEMORY_LIMIT)'. It must end with 'Mi' or 'Gi' (e.g., 512Mi or 1Gi).)
+endif
+
+# Define telemetry configuration
+ENABLE_TELEMETRY ?= false
+ifeq ($(ENABLE_TELEMETRY),true)
+  TELEMETRY_CONFIG := |-
+    telemetry {
+      prometheus_retention_time = "30s"
+      statsite_address = "127.0.0.1:8125"
+      disable_hostname = true
+    }
+else
+  TELEMETRY_CONFIG ?=
+endif
+
+# Validate memory ranges (e.g., 128Mi <= MEMORY_REQUEST <= 4096Mi)
+MEMORY_REQUEST_VALUE := $(subst Mi,,$(subst Gi,,$(MEMORY_REQUEST)))
+MEMORY_REQUEST_UNIT := $(suffix $(MEMORY_REQUEST))
+ifeq ($(MEMORY_REQUEST_UNIT),Gi)
+  MEMORY_REQUEST_VALUE := $(shell echo $$(($(MEMORY_REQUEST_VALUE) * 1024)))
+endif
+ifeq ($(shell [ $(MEMORY_REQUEST_VALUE) -ge 128 ] && [ $(MEMORY_REQUEST_VALUE) -le 4096 ] && echo true),)
+  $(error Invalid MEMORY_REQUEST value '$(MEMORY_REQUEST)'. It must be between 128Mi and 4096Mi.)
+endif
+
+MEMORY_LIMIT_VALUE := $(subst Mi,,$(subst Gi,,$(MEMORY_LIMIT)))
+MEMORY_LIMIT_UNIT := $(suffix $(MEMORY_LIMIT))
+ifeq ($(MEMORY_LIMIT_UNIT),Gi)
+  MEMORY_LIMIT_VALUE := $(shell echo $$(($(MEMORY_LIMIT_VALUE) * 1024)))
+endif
+ifeq ($(shell [ $(MEMORY_LIMIT_VALUE) -ge 128 ] && [ $(MEMORY_LIMIT_VALUE) -le 4096 ] && echo true),)
+  $(error Invalid MEMORY_LIMIT value '$(MEMORY_LIMIT)'. It must be between 128Mi and 4096Mi.)
+endif
