@@ -407,3 +407,9 @@ remove-release:
 	@SECRET_NAME="app-version-secret"; \
 	kubectl delete secret $$SECRET_NAME 2>/dev/null || true
 	@echo "Secret deleted successfully: app-version-secret"
+
+# Pretty print and decode the Kubernetes secret
+.PHONY: show-release
+show-release:
+	@SECRET_NAME="app-version-secret"; \
+	kubectl get secret $$SECRET_NAME -o jsonpath='{.data.version\.json}' | base64 --decode | jq -r .VERSION
