@@ -285,11 +285,11 @@ template:
 	@$(foreach manifest,$(manifests),echo "$(manifest)";)
 
 # Apply Target: Applies the generated Kubernetes manifests to the cluster using `kubectl apply`.
-apply:
+apply: create-release
 	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl apply -f - ;)
 
 # Delete Target: Deletes the Kubernetes resources defined in the generated manifests using `kubectl delete`.
-delete:
+delete: remove-release
 	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl delete -f - ;)
 
 # Validate-% Target: Validates a specific manifest using `yq`.
@@ -388,3 +388,22 @@ release:
 	git push origin $$version; \
 	gh release create $$version --generate-notes
 	@echo "Release $$version created and pushed to GitHub."
+
+# Create a Kubernetes secret with VERSION and Git Commit SHA
+.PHONY: create-release
+create-release:
+	@echo "Creating Kubernetes secret with VERSION set to Git commit SHA..."
+	@SECRET_NAME="app-version-secret"; \
+	JSON_DATA="{\"VERSION\":\"$(GIT_COMMIT)\"}"; \
+	kubectl create secret generic $$SECRET_NAME \
+		--from-literal=version.json="$$JSON_DATA" \
+		--dry-run=client -o yaml | kubectl apply -f -
+	@echo "Secret created successfully: app-version-secret"
+
+# Remove the dynamically created Kubernetes secret
+.PHONY: remove-release
+remove-release:
+	@echo "Deleting Kubernetes secret: app-version-secret..."
+	@SECRET_NAME="app-version-secret"; \
+	kubectl delete secret $$SECRET_NAME 2>/dev/null || true
+	@echo "Secret deleted successfully: app-version-secret"
