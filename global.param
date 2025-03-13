@@ -1,38 +1,3 @@
-
-# Set default environment
-ENV ?= dev
-
-GIT_COMMIT_SHA256 = $(shell git rev-parse HEAD)
-
-# List of allowed environments
-ALLOWED_ENVS := dev sit uat prod
-
-# Validate ENV variable
-ifeq ($(filter $(ENV),$(ALLOWED_ENVS)),)
-    $(error Invalid ENV value '$(ENV)'. Allowed values are: $(ALLOWED_ENVS))
-endif
-
-# Define environment-specific parameter file
-PARAM_FILE := $(ENV).param
-
-# Check if parameter file exists
-ifeq ($(wildcard $(PARAM_FILE)),)
-    $(error Parameter file for environment '$(ENV)' not found: $(PARAM_FILE))
-endif
-
-# Include environment-specific parameter file
-include $(PARAM_FILE)
-
-# List of valid VAULT_NAMESPACE values
-VALID_VAULT_NAMESPACES := vault-prod vault-sit vault-uat vault-dev
-
-# Validate VAULT_NAMESPACE
-ifndef VAULT_NAMESPACE
-    $(error VAULT_NAMESPACE is not defined. Please set VAULT_NAMESPACE in the parameter files.)
-else ifeq ($(filter $(VAULT_NAMESPACE),$(VALID_VAULT_NAMESPACES)),)
-    $(error Invalid VAULT_NAMESPACE value '$(VAULT_NAMESPACE)'. Allowed values are: $(VALID_VAULT_NAMESPACES))
-endif
-
 # Validate mandatory environment variables
 ifndef CPU_REQUEST
   $(error CPU_REQUEST is not set. Please export CPU_REQUEST.)
