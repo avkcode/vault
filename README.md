@@ -2,6 +2,7 @@
 
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.
 
+```
 +-------------------+
 |   make apply       |
 +-------------------+
@@ -41,6 +42,7 @@ When you run make apply, several steps are executed in sequence to apply the Kub
 |     applied       |
 |     resources.    |
 +-------------------+
+```
 
 ## Unseal Script and Dockerfile
 
