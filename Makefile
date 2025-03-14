@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 # Check if DEBUG=1 is set, and conditionally add MAKEFLAGS
 ifeq ($(DEBUG),1)
 	MAKEFLAGS += --no-print-directory
@@ -14,7 +16,7 @@ help:
 	@echo "  template          - Generate Kubernetes manifests from templates"
 	@echo "  apply             - Apply generated manifests to the Kubernetes cluster"
 	@echo "  delete            - Delete Kubernetes resources defined in the manifests"
-	@echo "  validate-%        - Validate a specific manifest using yq"
+	@echo "  validate-%        - Validate a specific manifest using yq, e.g. make validate-rbac"
 	@echo "  print-%           - Print the value of a specific variable"
 	@echo "  get-vault-ui      - Fetch the Vault UI Node IP and NodePort"
 	@echo "  build-vault-image - Build the Vault Docker image"

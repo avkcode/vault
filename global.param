@@ -1,3 +1,11 @@
+# ============================================================================
+# Purpose: This Makefile snippet is used to validate and configure environment 
+#          variables required for deploying or running a service. It ensures 
+#          that mandatory resource allocation parameters (CPU and memory) are 
+#          properly set and conform to expected formats and ranges. Additionally, 
+#          it provides optional telemetry configuration based on the 
+#          ENABLE_TELEMETRY flag.
+
 # Validate mandatory environment variables
 ifndef CPU_REQUEST
   $(error CPU_REQUEST is not set. Please export CPU_REQUEST.)

@@ -1,3 +1,9 @@
+# ============================================================================
+# Purpose: This Makefile contains configuration variables for deploying HashiCorp Vault 
+#          in a Kubernetes environment. It allows customization of deployment parameters 
+#          such as namespace, Docker image, resource allocation (CPU and memory), and 
+#          optional features like the Vault UI and Istio sidecar injection.
+
 # Namespace where Vault will be deployed
 VAULT_NAMESPACE ?= default
 # Explanation: This defines the Kubernetes namespace where Vault resources will be created. 
