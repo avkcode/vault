@@ -83,6 +83,17 @@ Every time you run make apply, the Makefile is designed to automatically trigger
 - global.param - contains validation checks 
 - dev.param - enviroment variables
 
+It’s possible to override parameters via CLI:
+```
+make apply \
+VAULT_NAMESPACE=my-vault-namespace \
+DOCKER_IMAGE=hashicorp/vault:1.17.0 \
+REPLICA_NUM=3 \
+CPU_REQUEST="4000m" \
+MEMORY_REQUEST="1024Mi" \
+ENABLE_ISTIO_SIDECAR='false'
+```
+
 ## Unseal Script and Dockerfile
 
 The unseal.py script automates the process of unsealing HashiCorp Vault using provided unseal keys. It checks the Vault's seal status and sends unseal keys to the /sys/unseal endpoint until the Vault is fully unsealed.
