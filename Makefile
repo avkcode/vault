@@ -174,7 +174,7 @@ define statefulset
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: vault-statefulset
+  name: vault
   namespace: ${VAULT_NAMESPACE}
   labels:
     environment: ${ENV}
@@ -293,7 +293,7 @@ manifests += $${configmap}
 manifests += $${services}
 manifests += $${statefulset}
 
-.PHONY: template apply delete dry-run
+.PHONY: template apply delete
 
 # Outputs the generated Kubernetes manifests to the console.
 template:
