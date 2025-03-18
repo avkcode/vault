@@ -60,6 +60,10 @@ endif
 include $(PARAM_FILE)
 # This ensures that only predefined environments can be used.
 
+# The global.param file contains shared parameters that apply to all environments unless explicitly overridden.
+# For example, it might define default values for VAULT_NAMESPACE, DOCKER_IMAGE, or resource allocation (CPU_REQUEST, MEMORY_REQUEST, etc.).
+include global.param
+
 ##########
 ##########
 
@@ -264,11 +268,11 @@ spec:
               name: http-rep
           resources:
             requests:
-              cpu: ${VAULT_CPU_REQUEST}
-              memory: ${VAULT_MEMORY_REQUEST}
+              cpu: ${CPU_REQUEST}
+              memory: ${MEMORY_REQUEST}
             limits:
-              cpu: ${VAULT_CPU_LIMIT}
-              memory: ${VAULT_MEMORY_LIMIT}
+              cpu: ${CPU_LIMIT}
+              memory: ${MEMORY_LIMIT}
   volumeClaimTemplates:
     - metadata:
         name: data
@@ -451,25 +455,23 @@ validate-json:
 	)
 	@echo "All JSON manifests are valid Kubernetes resources."
 
-ALL_VARS := $(.VARIABLES)
-
 .PHONY: save-manifests
 save-manifests:
 	@echo "Creating or recreating 'manifests' directory..."
 	@rm -rf manifests
 	@mkdir -p manifests
-	@echo "Saving manifests in YAML and JSON formats..."
+	@echo "Saving manifests to 'manifests' directory..."
 	@$(foreach var,$(manifests), \
 		VAR_NAME=$$(echo "$(var)" | grep -oE '^\$$\{[a-zA-Z_]+\}' | cut -d'{' -f2 | cut -d'}' -f1); \
 		if [ -n "$$VAR_NAME" ]; then \
-			echo "Saving manifest: $$VAR_NAME"; \
-			echo "$(var)" > "manifests/$$VAR_NAME.yaml"; \
-			echo "$(var)" | yq eval -o=json -P '.' - > "manifests/$$VAR_NAME.json"; \
+			MANIFEST_FILE="manifests/$$VAR_NAME.yaml"; \
+			echo "Saving manifest for variable '$$VAR_NAME' to $$MANIFEST_FILE..."; \
+			echo "$(var)" > $$MANIFEST_FILE; \
 		else \
 			echo "Error: Could not extract variable name from manifest: $(var)"; \
 		fi; \
 	)
-	@echo "Manifests saved successfully in the 'manifests' directory."
+	@echo "All manifests saved successfully in the 'manifests' directory."
 
 # Target to list all variables, their origin, and value
 list-vars:
