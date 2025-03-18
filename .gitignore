@@ -27,3 +27,4 @@ go.work.sum
 *.json
 *.bak
 *.yaml
+*.tar.gz
