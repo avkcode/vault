@@ -67,7 +67,7 @@ define rbac
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: vault
+  name: vault-service-account
   namespace: ${VAULT_NAMESPACE}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -80,7 +80,7 @@ roleRef:
   name: system:auth-delegator
 subjects:
 - kind: ServiceAccount
-  name: vault
+  name: vault-service-account
   namespace: ${VAULT_NAMESPACE}
 endef
 export rbac
@@ -114,7 +114,7 @@ define services
 apiVersion: v1
 kind: Service
 metadata:
-  name: vault
+  name: vault-service
   namespace: ${VAULT_NAMESPACE}
   labels:
     environment: ${ENV}
@@ -169,7 +169,7 @@ define statefulset
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: vault
+  name: vault-statefulset
   namespace: ${VAULT_NAMESPACE}
   labels:
     environment: ${ENV}
@@ -288,7 +288,7 @@ manifests += $${configmap}
 manifests += $${services}
 manifests += $${statefulset}
 
-.PHONY: template apply delete
+.PHONY: template apply delete dry-run
 
 # Outputs the generated Kubernetes manifests to the console.
 template:
@@ -310,7 +310,6 @@ validate-%:
 print-%:
 	@echo "$$$*"
 
-.PHONY: dry-run
 dry-run: template
 	@echo "Dry run mode enabled. The following changes would be applied:"
 	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl apply --dry-run=client -f - ;)
@@ -458,9 +457,13 @@ save-manifests:
 	@mkdir -p manifests
 	@echo "Saving manifests in YAML and JSON formats..."
 	@$(foreach manifest,$(manifests), \
-		FILE_NAME=$$(echo "$(manifest)" | yq eval '.metadata.name' -); \
-		KIND=$$(echo "$(manifest)" | yq eval '.kind' - | tr '[:upper:]' '[:lower:]'); \
+		FILE_NAME=$$(echo "$(manifest)" | yq eval '.metadata.name' - 2>/dev/null); \
+		KIND=$$(echo "$(manifest)" | yq eval '.kind' - 2>/dev/null | tr '[:upper:]' '[:lower:]'); \
+	if [ -n "$$FILE_NAME" ] && [ -n "$$KIND" ]; then \
 		echo "$(manifest)" > manifests/$$KIND-$$FILE_NAME.yaml; \
 		echo "$(manifest)" | yq eval -o=json -P '.' - > manifests/$$KIND-$$FILE_NAME.json; \
+	else \
+		echo "Skipping manifest due to missing .metadata.name or .kind"; \
+	fi; \
 	)
 	@echo "Manifests saved successfully in the 'manifests' directory."
