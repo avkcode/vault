@@ -41,6 +41,19 @@ Available targets:
   help              - Display this help message
 ```
 
+Makefile flexibility can be leveraged to include constraints and parameter validation directly within the parameter sets. This is a powerful feature of Makefiles, allowing developers to enforce rules and validate configurations at build time, ensuring that parameters like MEMORY_REQUEST adhere to predefined constraints.
+```
+# Validate memory ranges (e.g., 128Mi <= MEMORY_REQUEST <= 4096Mi)
+MEMORY_REQUEST_VALUE := $(subst Mi,,$(subst Gi,,$(MEMORY_REQUEST)))
+MEMORY_REQUEST_UNIT := $(suffix $(MEMORY_REQUEST))
+ifeq ($(MEMORY_REQUEST_UNIT),Gi)
+  MEMORY_REQUEST_VALUE := $(shell echo $$(($(MEMORY_REQUEST_VALUE) * 1024)))
+endif
+ifeq ($(shell [ $(MEMORY_REQUEST_VALUE) -ge 128 ] && [ $(MEMORY_REQUEST_VALUE) -le 4096 ] && echo true),)
+  $(error Invalid MEMORY_REQUEST value '$(MEMORY_REQUEST)'. It must be between 128Mi and 4096Mi.)
+endif
+```
+
 ## Workflow
 
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.
@@ -89,7 +102,14 @@ When you run make apply, several steps are executed in sequence to apply the Kub
 
 Every time you run make apply, the Makefile is designed to automatically trigger the create-release target as part of the process. This ensures that a Kubernetes secret is created with the current Git commit SHA, which helps track the version of the app being deployed. By including this step, the Makefile guarantees that the release information is always up-to-date and stored in the cluster whenever the manifests are applied. This makes it easier to identify which version of the app is running and maintain consistency across deployments. Make delete triggers remove-release target.
 
-- global.param - contains validation checks 
+The global.param file contains shared parameters that apply to all environments unless explicitly overridden.
+For example, it might define default values for VAULT_NAMESPACE, DOCKER_IMAGE, or resource allocation (CPU_REQUEST, MEMORY_REQUEST, etc.).
+- global.param
+
+This Makefile contains configuration variables for deploying HashiCorp Vault
+in a Kubernetes environment. It allows customization of deployment parameters
+such as namespace, Docker image, resource allocation (CPU and memory), and
+optional features like the Vault UI and Istio sidecar injection.
 - dev.param - enviroment variables
 
 It’s possible to override parameters via CLI:
