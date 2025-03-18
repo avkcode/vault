@@ -15,7 +15,7 @@ help:
 	@echo "Available targets:"
 	@echo "  template          - Generate Kubernetes manifests from templates"
 	@echo "  apply             - Apply generated manifests to the Kubernetes cluster"
-	@echo "  dry-run             Perform a dry run of the 'apply' target to preview changes"
+	@echo "  dry-run           - Perform a dry run of the 'apply' target to preview changes"
 	@echo "  delete            - Delete Kubernetes resources defined in the manifests"
 	@echo "  validate-%        - Validate a specific manifest using yq, e.g. make validate-rbac"
 	@echo "  print-%           - Print the value of a specific variable"
@@ -31,6 +31,12 @@ help:
 	@echo "  get-vault-keys    - Initialize Vault and retrieve unseal and root keys"
 	@echo "  show-params       - Show contents of the parameter file for the current environment"
 	@echo "  interactive       - Start an interactive session"
+	@echo "  create-release    - Create a Kubernetes secret with VERSION set to Git commit SHA"
+	@echo "  remove-release    - Remove the dynamically created Kubernetes secret"
+	@echo "  show-release      - Pretty print and decode the Kubernetes secret"
+	@echo "  convert-to-json   - Convert manifests to JSON format"
+	@echo "  validate-json     - Validate JSON manifests against Kubernetes API"
+	@echo "  save-manifests    - Save manifests in YAML and JSON formats to the 'manifests' directory"
 	@echo "  help              - Display this help message"
 
 ##########
@@ -159,6 +165,7 @@ endef
 export services
 
 define statefulset
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -430,3 +437,30 @@ remove-release:
 show-release:
 	@SECRET_NAME="app-version-secret"; \
 	kubectl get secret $$SECRET_NAME -o jsonpath='{.data.version\.json}' | base64 --decode | jq -r .VERSION
+
+.PHONY: convert-to-json
+convert-to-json:
+	@echo "Converting manifests to JSON..."
+	@$(foreach manifest,$(manifests),echo "$(manifest)" | yq eval -o=json -P '.' -;)
+
+.PHONY: validate-json
+validate-json:
+	@echo "Validating JSON manifests against Kubernetes API..."
+	@$(foreach manifest,$(manifests), \
+		echo "$(manifest)" | yq eval -o=json -P '.' - | kubectl apply --dry-run=server -f - || exit 1; \
+	)
+	@echo "All JSON manifests are valid Kubernetes resources."
+
+.PHONY: save-manifests
+save-manifests:
+	@echo "Creating or recreating 'manifests' directory..."
+	@rm -rf manifests
+	@mkdir -p manifests
+	@echo "Saving manifests in YAML and JSON formats..."
+	@$(foreach manifest,$(manifests), \
+		FILE_NAME=$$(echo "$(manifest)" | yq eval '.metadata.name' -); \
+		KIND=$$(echo "$(manifest)" | yq eval '.kind' - | tr '[:upper:]' '[:lower:]'); \
+		echo "$(manifest)" > manifests/$$KIND-$$FILE_NAME.yaml; \
+		echo "$(manifest)" | yq eval -o=json -P '.' - > manifests/$$KIND-$$FILE_NAME.json; \
+	)
+	@echo "Manifests saved successfully in the 'manifests' directory."
