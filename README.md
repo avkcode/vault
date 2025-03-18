@@ -15,8 +15,9 @@ make
 Available targets:
   template          - Generate Kubernetes manifests from templates
   apply             - Apply generated manifests to the Kubernetes cluster
+  dry-run           - Perform a dry run of the 'apply' target to preview changes
   delete            - Delete Kubernetes resources defined in the manifests
-  validate-%        - Validate a specific manifest using yq
+  validate-%        - Validate a specific manifest using yq, e.g. make validate-rbac
   print-%           - Print the value of a specific variable
   get-vault-ui      - Fetch the Vault UI Node IP and NodePort
   build-vault-image - Build the Vault Docker image
@@ -29,6 +30,14 @@ Available targets:
   release           - Create a Git tag and release on GitHub
   get-vault-keys    - Initialize Vault and retrieve unseal and root keys
   show-params       - Show contents of the parameter file for the current environment
+  interactive       - Start an interactive session
+  create-release    - Create a Kubernetes secret with VERSION set to Git commit SHA
+  remove-release    - Remove the dynamically created Kubernetes secret
+  show-release      - Pretty print and decode the Kubernetes secret
+  convert-to-json   - Convert manifests to JSON format
+  validate-json     - Validate JSON manifests against Kubernetes API
+  save-manifests    - Save manifests in YAML and JSON formats to the 'manifests' directory
+  list-vars         - List all non-built-in variables, their origins, and values.
   help              - Display this help message
 ```
 

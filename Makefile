@@ -37,6 +37,7 @@ help:
 	@echo "  convert-to-json   - Convert manifests to JSON format"
 	@echo "  validate-json     - Validate JSON manifests against Kubernetes API"
 	@echo "  save-manifests    - Save manifests in YAML and JSON formats to the 'manifests' directory"
+	@echo "  list-vars         - List all non-built-in variables, their origins, and values."
 	@echo "  help              - Display this help message"
 
 ##########
@@ -450,20 +451,31 @@ validate-json:
 	)
 	@echo "All JSON manifests are valid Kubernetes resources."
 
+ALL_VARS := $(.VARIABLES)
+
 .PHONY: save-manifests
 save-manifests:
 	@echo "Creating or recreating 'manifests' directory..."
 	@rm -rf manifests
 	@mkdir -p manifests
 	@echo "Saving manifests in YAML and JSON formats..."
-	@$(foreach manifest,$(manifests), \
-		FILE_NAME=$$(echo "$(manifest)" | yq eval '.metadata.name' - 2>/dev/null); \
-		KIND=$$(echo "$(manifest)" | yq eval '.kind' - 2>/dev/null | tr '[:upper:]' '[:lower:]'); \
-	if [ -n "$$FILE_NAME" ] && [ -n "$$KIND" ]; then \
-		echo "$(manifest)" > manifests/$$KIND-$$FILE_NAME.yaml; \
-		echo "$(manifest)" | yq eval -o=json -P '.' - > manifests/$$KIND-$$FILE_NAME.json; \
-	else \
-		echo "Skipping manifest due to missing .metadata.name or .kind"; \
-	fi; \
+	@$(foreach var,$(manifests), \
+		VAR_NAME=$$(echo "$(var)" | grep -oE '^\$$\{[a-zA-Z_]+\}' | cut -d'{' -f2 | cut -d'}' -f1); \
+		if [ -n "$$VAR_NAME" ]; then \
+			echo "Saving manifest: $$VAR_NAME"; \
+			echo "$(var)" > "manifests/$$VAR_NAME.yaml"; \
+			echo "$(var)" | yq eval -o=json -P '.' - > "manifests/$$VAR_NAME.json"; \
+		else \
+			echo "Error: Could not extract variable name from manifest: $(var)"; \
+		fi; \
 	)
 	@echo "Manifests saved successfully in the 'manifests' directory."
+
+# Target to list all variables, their origin, and value
+list-vars:
+	@echo "Variable Name       Origin"
+	@echo "-------------------- -----------"
+	@$(foreach var, $(filter-out .% %_FILES, $(.VARIABLES)), \
+		$(if $(filter-out default automatic, $(origin $(var))), \
+			printf "%-20s %s\\n" "$(var)" "$(origin $(var))"; \
+		))
