@@ -33,7 +33,7 @@ help:
 	@echo "  interactive       - Start an interactive session"
 	@echo "  create-release    - Create a Kubernetes secret with VERSION set to Git commit SHA"
 	@echo "  remove-release    - Remove the dynamically created Kubernetes secret"
-	@echo "  show-release      - Pretty print and decode the Kubernetes secret"
+	@echo "  dump-manifests    - Dump manifests in both YAML and JSON formats to the current directory"
 	@echo "  convert-to-json   - Convert manifests to JSON format"
 	@echo "  validate-json     - Validate JSON manifests against Kubernetes API"
 	@echo "  save-manifests    - Save manifests in YAML and JSON formats to the 'manifests' directory"
@@ -405,7 +405,7 @@ bundle:
 # Clean up generated files
 .PHONY: clean
 clean:
-	@rm -f archive-*.tar.gz bundle-*.bundle
+	@rm -f archive-*.tar.gz bundle-*.bundle manifest.yaml manifest.json
 
 # Create a Git tag and release on GitHub
 .PHONY: release
@@ -444,7 +444,6 @@ show-release:
 
 .PHONY: convert-to-json
 convert-to-json:
-	@echo "Converting manifests to JSON..."
 	@$(foreach manifest,$(manifests),echo "$(manifest)" | yq eval -o=json -P '.' -;)
 
 .PHONY: validate-json
@@ -455,23 +454,13 @@ validate-json:
 	)
 	@echo "All JSON manifests are valid Kubernetes resources."
 
-.PHONY: save-manifests
-save-manifests:
-	@echo "Creating or recreating 'manifests' directory..."
-	@rm -rf manifests
-	@mkdir -p manifests
-	@echo "Saving manifests to 'manifests' directory..."
-	@$(foreach var,$(manifests), \
-		VAR_NAME=$$(echo "$(var)" | grep -oE '^\$$\{[a-zA-Z_]+\}' | cut -d'{' -f2 | cut -d'}' -f1); \
-		if [ -n "$$VAR_NAME" ]; then \
-			MANIFEST_FILE="manifests/$$VAR_NAME.yaml"; \
-			echo "Saving manifest for variable '$$VAR_NAME' to $$MANIFEST_FILE..."; \
-			echo "$(var)" > $$MANIFEST_FILE; \
-		else \
-			echo "Error: Could not extract variable name from manifest: $(var)"; \
-		fi; \
-	)
-	@echo "All manifests saved successfully in the 'manifests' directory."
+.PHONY: dump-manifests
+# New target to dump manifests in both YAML and JSON formats
+dump-manifests: template convert-to-json
+	@echo "Dumping manifests to manifest.yaml and manifest.json..."
+	@make template > manifest.yaml
+	@make convert-to-json > manifest.json
+	@echo "Manifests successfully dumped to manifest.yaml and manifest.json."
 
 # Target to list all variables, their origin, and value
 list-vars:
