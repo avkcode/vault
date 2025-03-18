@@ -36,7 +36,6 @@ help:
 	@echo "  dump-manifests    - Dump manifests in both YAML and JSON formats to the current directory"
 	@echo "  convert-to-json   - Convert manifests to JSON format"
 	@echo "  validate-json     - Validate JSON manifests against Kubernetes API"
-	@echo "  save-manifests    - Save manifests in YAML and JSON formats to the 'manifests' directory"
 	@echo "  list-vars         - List all non-built-in variables, their origins, and values."
 	@echo "  help              - Display this help message"
 
