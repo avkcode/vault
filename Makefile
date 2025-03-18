@@ -15,6 +15,7 @@ help:
 	@echo "Available targets:"
 	@echo "  template          - Generate Kubernetes manifests from templates"
 	@echo "  apply             - Apply generated manifests to the Kubernetes cluster"
+	@echo "  dry-run             Perform a dry run of the 'apply' target to preview changes"
 	@echo "  delete            - Delete Kubernetes resources defined in the manifests"
 	@echo "  validate-%        - Validate a specific manifest using yq, e.g. make validate-rbac"
 	@echo "  print-%           - Print the value of a specific variable"
@@ -29,6 +30,7 @@ help:
 	@echo "  release           - Create a Git tag and release on GitHub"
 	@echo "  get-vault-keys    - Initialize Vault and retrieve unseal and root keys"
 	@echo "  show-params       - Show contents of the parameter file for the current environment"
+	@echo "  interactive       - Start an interactive session"
 	@echo "  help              - Display this help message"
 
 ##########
@@ -300,6 +302,20 @@ validate-%:
 # Prints the value of a specific variable.
 print-%:
 	@echo "$$$*"
+
+.PHONY: dry-run
+dry-run: template
+	@echo "Dry run mode enabled. The following changes would be applied:"
+	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl apply --dry-run=client -f - ;)
+
+##########
+##########
+
+.PHONY: interactive
+interactive:
+	@echo "Interactive mode:"
+	@read -p "Enter the environment (dev/sit/uat/prod): " env; \
+	$(MAKE) ENV=$$env apply
 
 # Variables for Docker image
 VAULT_IMAGE_NAME ?= vault
