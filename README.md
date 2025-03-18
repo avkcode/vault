@@ -15,7 +15,6 @@ make
 Available targets:
   template          - Generate Kubernetes manifests from templates
   apply             - Apply generated manifests to the Kubernetes cluster
-  dry-run           - Perform a dry run of the 'apply' target to preview changes
   delete            - Delete Kubernetes resources defined in the manifests
   validate-%        - Validate a specific manifest using yq, e.g. make validate-rbac
   print-%           - Print the value of a specific variable
@@ -35,7 +34,8 @@ Available targets:
   remove-release    - Remove the dynamically created Kubernetes secret
   dump-manifests    - Dump manifests in both YAML and JSON formats to the current directory
   convert-to-json   - Convert manifests to JSON format
-  validate-json     - Validate JSON manifests against Kubernetes API
+  validate-server   - Validate JSON manifests against the Kubernetes API (server-side)
+  validate-client   - Validate JSON manifests against the Kubernetes API (client-side)
   list-vars         - List all non-built-in variables, their origins, and values.
   help              - Display this help message
 ```

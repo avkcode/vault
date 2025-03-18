@@ -15,7 +15,6 @@ help:
 	@echo "Available targets:"
 	@echo "  template          - Generate Kubernetes manifests from templates"
 	@echo "  apply             - Apply generated manifests to the Kubernetes cluster"
-	@echo "  dry-run           - Perform a dry run of the 'apply' target to preview changes"
 	@echo "  delete            - Delete Kubernetes resources defined in the manifests"
 	@echo "  validate-%        - Validate a specific manifest using yq, e.g. make validate-rbac"
 	@echo "  print-%           - Print the value of a specific variable"
@@ -35,7 +34,8 @@ help:
 	@echo "  remove-release    - Remove the dynamically created Kubernetes secret"
 	@echo "  dump-manifests    - Dump manifests in both YAML and JSON formats to the current directory"
 	@echo "  convert-to-json   - Convert manifests to JSON format"
-	@echo "  validate-json     - Validate JSON manifests against Kubernetes API"
+	@echo "  validate-server   - Validate JSON manifests against the Kubernetes API (server-side)"
+	@echo "  validate-client   - Validate JSON manifests against the Kubernetes API (client-side)"
 	@echo "  list-vars         - List all non-built-in variables, their origins, and values."
 	@echo "  help              - Display this help message"
 
@@ -314,10 +314,6 @@ validate-%:
 print-%:
 	@echo "$$$*"
 
-dry-run: template
-	@echo "Dry run mode enabled. The following changes would be applied:"
-	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl apply --dry-run=client -f - ;)
-
 ##########
 ##########
 
@@ -445,13 +441,23 @@ show-release:
 convert-to-json:
 	@$(foreach manifest,$(manifests),echo "$(manifest)" | yq eval -o=json -P '.' -;)
 
-.PHONY: validate-json
-validate-json:
-	@echo "Validating JSON manifests against Kubernetes API..."
+.PHONY: validate-server
+validate-server:
+	@echo "Validating JSON manifests against the Kubernetes API (server-side validation)..."
 	@$(foreach manifest,$(manifests), \
-		echo "$(manifest)" | yq eval -o=json -P '.' - | kubectl apply --dry-run=server -f - || exit 1; \
+		echo "Validating manifest: $(manifest)" && \
+		printf '%s' "$(manifest)" | yq eval -o=json -P '.' - | kubectl apply --dry-run=server -f - || exit 1; \
 	)
-	@echo "All JSON manifests are valid Kubernetes resources."
+	@echo "All JSON manifests passed server-side validation successfully."
+
+.PHONY: validate-client
+validate-client:
+	@echo "Validating JSON manifests against the Kubernetes API (client-side validation)..."
+	@$(foreach manifest,$(manifests), \
+		echo "Validating manifest: $(manifest)" && \
+		printf '%s' "$(manifest)" | yq eval -o=json -P '.' - | kubectl apply --dry-run=client -f - || exit 1; \
+	)
+	@echo "All JSON manifests passed client-side validation successfully."
 
 .PHONY: dump-manifests
 # New target to dump manifests in both YAML and JSON formats
