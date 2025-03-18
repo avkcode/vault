@@ -37,6 +37,7 @@ Available targets:
   validate-server   - Validate JSON manifests against the Kubernetes API (server-side)
   validate-client   - Validate JSON manifests against the Kubernetes API (client-side)
   list-vars         - List all non-built-in variables, their origins, and values.
+  package           - Create a tar.gz archive of the entire directory
   help              - Display this help message
 ```
 

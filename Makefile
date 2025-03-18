@@ -37,6 +37,7 @@ help:
 	@echo "  validate-server   - Validate JSON manifests against the Kubernetes API (server-side)"
 	@echo "  validate-client   - Validate JSON manifests against the Kubernetes API (client-side)"
 	@echo "  list-vars         - List all non-built-in variables, their origins, and values."
+	@echo "  package           - Create a tar.gz archive of the entire directory"
 	@echo "  help              - Display this help message"
 
 ##########
@@ -475,3 +476,11 @@ list-vars:
 		$(if $(filter-out default automatic, $(origin $(var))), \
 			printf "%-20s %s\\n" "$(var)" "$(origin $(var))"; \
 		))
+
+.PHONY: package
+package:
+	@echo "Creating a tar.gz archive of the entire directory..."
+	@DIR_NAME=$$(basename $$(pwd)); \
+	TAR_FILE="$$DIR_NAME.tar.gz"; \
+	tar -czvf $$TAR_FILE .; \
+	echo "Archive created successfully: $$TAR_FILE"
