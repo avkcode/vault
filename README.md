@@ -33,10 +33,9 @@ Available targets:
   interactive       - Start an interactive session
   create-release    - Create a Kubernetes secret with VERSION set to Git commit SHA
   remove-release    - Remove the dynamically created Kubernetes secret
-  show-release      - Pretty print and decode the Kubernetes secret
+  dump-manifests    - Dump manifests in both YAML and JSON formats to the current directory
   convert-to-json   - Convert manifests to JSON format
   validate-json     - Validate JSON manifests against Kubernetes API
-  save-manifests    - Save manifests in YAML and JSON formats to the 'manifests' directory
   list-vars         - List all non-built-in variables, their origins, and values.
   help              - Display this help message
 ```
