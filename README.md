@@ -20,8 +20,8 @@ Available targets:
   print-%           - Print the value of a specific variable
   get-vault-ui      - Fetch the Vault UI Node IP and NodePort
   build-vault-image - Build the Vault Docker image
-  exec              - Execute a shell in the vault-0 pod
-  logs              - Stream logs from the vault-0 pod
+  exec              - Execute a shell in the vault pod
+  logs              - Stream logs from the vault pod
   switch-namespace  - Switch the current Kubernetes namespace
   archive           - Create a git archive
   bundle            - Create a git bundle
