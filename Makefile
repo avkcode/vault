@@ -324,12 +324,10 @@ interactive:
 	@read -p "Enter the environment (dev/sit/uat/prod): " env; \
 	$(MAKE) ENV=$$env apply
 
-# Variables for Docker image
 VAULT_IMAGE_NAME ?= vault
 VAULT_IMAGE_TAG  ?= latest
 DOCKERFILE_PATH  ?= ./Dockerfile
 
-# Build the Vault Docker image
 .PHONY: build-vault-image
 build-vault-image:
 	@echo "Building Vault Docker image..."
@@ -404,30 +402,25 @@ switch-namespace:
 			echo "Error: Namespace '$$SELECTED_NAMESPACE' not found."; \
 		fi
 
-# Variables
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 
-# Create git archive
 .PHONY: archive
 archive:
 	@echo "Creating git archive..."
 	git archive --format=tar.gz --output=archive-$(GIT_BRANCH)-$(GIT_COMMIT).tar.gz HEAD
 	@echo "Archive created: archive-$(GIT_BRANCH)-$(GIT_COMMIT).tar.gz"
 
-# Create git bundle
 .PHONY: bundle
 bundle:
 	@echo "Creating git bundle..."
 	git bundle create bundle-$(GIT_BRANCH)-$(GIT_COMMIT).bundle --all
 	@echo "Bundle created: bundle-$(GIT_BRANCH)-$(GIT_COMMIT).bundle"
 
-# Clean up generated files
 .PHONY: clean
 clean:
 	@rm -f archive-*.tar.gz bundle-*.bundle manifest.yaml manifest.json
 
-# Create a Git tag and release on GitHub
 .PHONY: release
 release:
 	@echo "Creating Git tag and releasing on GitHub..."
@@ -437,7 +430,6 @@ release:
 	gh release create $$version --generate-notes
 	@echo "Release $$version created and pushed to GitHub."
 
-# Create a Kubernetes secret with VERSION and Git Commit SHA
 .PHONY: create-release
 create-release:
 	@echo "Creating Kubernetes secret with VERSION set to Git commit SHA..."
@@ -448,7 +440,6 @@ create-release:
 		--dry-run=client -o yaml | kubectl apply -f -
 	@echo "Secret created successfully: app-version-secret"
 
-# Remove the dynamically created Kubernetes secret
 .PHONY: remove-release
 remove-release:
 	@echo "Deleting Kubernetes secret: app-version-secret..."
@@ -456,7 +447,6 @@ remove-release:
 	kubectl delete secret $$SECRET_NAME 2>/dev/null || true
 	@echo "Secret deleted successfully: app-version-secret"
 
-# Pretty print and decode the Kubernetes secret
 .PHONY: show-release
 show-release:
 	@SECRET_NAME="app-version-secret"; \
@@ -485,14 +475,12 @@ validate-client:
 	@echo "All JSON manifests passed client-side validation successfully."
 
 .PHONY: dump-manifests
-# New target to dump manifests in both YAML and JSON formats
 dump-manifests: template convert-to-json
 	@echo "Dumping manifests to manifest.yaml and manifest.json..."
 	@make template > manifest.yaml
 	@make convert-to-json > manifest.json
 	@echo "Manifests successfully dumped to manifest.yaml and manifest.json."
 
-# Target to list all variables, their origin, and value
 list-vars:
 	@echo "Variable Name       Origin"
 	@echo "-------------------- -----------"
