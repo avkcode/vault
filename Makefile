@@ -348,19 +348,43 @@ get-vault-ui:
 
 .PHONY: get-vault-keys
 get-vault-keys:
-	kubectl exec vault-0 -- vault operator init -key-shares=1 -key-threshold=1 -format=json > keys.json
-	VAULT_UNSEAL_KEY=$(cat keys.json | jq -r ".unseal_keys_b64[]")
-	echo $VAULT_UNSEAL_KEY
-	VAULT_ROOT_KEY=$(cat keys.json | jq -r ".root_token")
-	echo $VAULT_ROOT_KEY
+	@echo "Available Vault pods:"
+	@PODS=$$(kubectl get pods -l app.kubernetes.io/name=vault -o jsonpath='{.items[*].metadata.name}'); \
+	echo "$$PODS"; \
+	read -p "Enter the Vault pod name (e.g., vault-0): " POD_NAME; \
+	if echo "$$PODS" | grep -qw "$$POD_NAME"; then \
+		kubectl exec $$POD_NAME -- vault operator init -key-shares=1 -key-threshold=1 -format=json > keys.json; \
+		VAULT_UNSEAL_KEY=$$(cat keys.json | jq -r ".unseal_keys_b64[]"); \
+		echo "Unseal Key: $$VAULT_UNSEAL_KEY"; \
+		VAULT_ROOT_KEY=$$(cat keys.json | jq -r ".root_token"); \
+		echo "Root Token: $$VAULT_ROOT_KEY"; \
+	else \
+		echo "Error: Pod '$$POD_NAME' not found."; \
+	fi
 
 .PHONY: exec
 exec:
-	@kubectl exec -it vault-0 -- /bin/sh
+	@echo "Available Vault pods:"
+	@PODS=$$(kubectl get pods -l app.kubernetes.io/name=vault -o jsonpath='{.items[*].metadata.name}'); \
+	echo "$$PODS"; \
+	read -p "Enter the Vault pod name (e.g., vault-0): " POD_NAME; \
+	if echo "$$PODS" | grep -qw "$$POD_NAME"; then \
+		kubectl exec -it $$POD_NAME -- /bin/sh; \
+	else \
+		echo "Error: Pod '$$POD_NAME' not found."; \
+	fi
 
 .PHONY: logs
 logs:
-	@kubectl logs -f vault-0
+	@echo "Available Vault pods:"
+	@PODS=$$(kubectl get pods -l app.kubernetes.io/name=vault -o jsonpath='{.items[*].metadata.name}'); \
+	echo "$$PODS"; \
+	read -p "Enter the Vault pod name (e.g., vault-0): " POD_NAME; \
+	if echo "$$PODS" | grep -qw "$$POD_NAME"; then \
+		kubectl logs -f $$POD_NAME; \
+	else \
+		echo "Error: Pod '$$POD_NAME' not found."; \
+	fi
 
 .PHONY: show-params
 show-params:
