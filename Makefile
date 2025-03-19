@@ -481,6 +481,7 @@ dump-manifests: template convert-to-json
 	@make convert-to-json > manifest.json
 	@echo "Manifests successfully dumped to manifest.yaml and manifest.json."
 
+.PHONY: list-vars
 list-vars:
 	@echo "Variable Name       Origin"
 	@echo "-------------------- -----------"
