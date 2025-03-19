@@ -352,7 +352,7 @@ get-vault-keys:
 	read -p "Enter the Vault pod name (e.g., vault-0): " POD_NAME; \
 	if echo "$$PODS" | grep -qw "$$POD_NAME"; then \
 		kubectl exec $$POD_NAME -- vault operator init -key-shares=1 -key-threshold=1 -format=json > keys.json; \
-		VAULT_UNSEAL_KEY=$$(cat keys.json | jq -r ".unseal_keys_b64[]"); \
+		VAULT_UNSEAL_KEY=$$(cat keys_$$POD_NAME.json | jq -r ".unseal_keys_b64[]"); \
 		echo "Unseal Key: $$VAULT_UNSEAL_KEY"; \
 		VAULT_ROOT_KEY=$$(cat keys.json | jq -r ".root_token"); \
 		echo "Root Token: $$VAULT_ROOT_KEY"; \
