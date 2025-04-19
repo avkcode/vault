@@ -123,6 +123,14 @@ MEMORY_REQUEST="1024Mi" \
 ENABLE_ISTIO_SIDECAR='false'
 ```
 
+## Helm
+
+`gen_helm_chart.py`
+Converts Kubernetes YAML to a templated Helm chart with values.yaml.
+
+`GENERATE_HELM_SCRIPT (helm.mk)`
+Embedded Python script in Makefile to auto-generate a Helm chart from YAML.
+
 ## Unseal Script and Dockerfile
 
 The unseal.py script automates the process of unsealing HashiCorp Vault using provided unseal keys. It checks the Vault's seal status and sends unseal keys to the /sys/unseal endpoint until the Vault is fully unsealed.
