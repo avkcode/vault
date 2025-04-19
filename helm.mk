@@ -2,7 +2,7 @@
 
 # Configuration
 CHART_NAME ?= vault-helm
-INPUT_YAML ?= manifests.yaml
+INPUT_YAML ?= $(PWD)/manifest.yaml
 OUTPUT_DIR ?= $(CHART_NAME)
 PYTHON ?= python3
 
@@ -20,7 +20,7 @@ def make_helm_compatible(value):
     elif isinstance(value, list):
         return [make_helm_compatible(v) for v in value]
     elif isinstance(value, str) and value.isdigit():
-        return f"{{{{ .Values.{value} }}}"
+        return f"{{{{ .Values.{value} }}}}"
     return value
 
 # Create chart directory structure
@@ -141,11 +141,17 @@ except Exception as e:
     print(f"Error: {str(e)}", file=sys.stderr)
     sys.exit(1)
 endef
-
-.PHONY: all clean generate-chart
-
-all: generate-chart
+export GENERATE_HELM_SCRIPT
 
 generate-chart: dump-manifests
 	@echo "Generating Helm chart from $(INPUT_YAML)"
+	@if [ ! -f "$(INPUT_YAML)" ]; then \
+		echo "Error: $(INPUT_YAML) not found. Run 'make dump-manifests' first."; \
+		exit 1; \
+	fi
 	@echo "$$GENERATE_HELM_SCRIPT" | $(PYTHON) -
+	@if [ ! -d "$(OUTPUT_DIR)" ]; then \
+		echo "Error: Helm chart generation failed. Output directory not created."; \
+		exit 1; \
+	fi
+	@echo "Helm chart successfully generated at: $(OUTPUT_DIR)"
