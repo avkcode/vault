@@ -1,7 +1,7 @@
 # Makefile for generating Vault Helm chart from Kubernetes manifests
 
 # Configuration
-CHART_NAME ?= vault-helm
+CHART_NAME ?= vault-chart
 INPUT_YAML ?= $(PWD)/manifest.yaml
 OUTPUT_DIR ?= $(CHART_NAME)
 PYTHON ?= python3
