@@ -125,7 +125,7 @@ ENABLE_ISTIO_SIDECAR='false'
 
 ## Helm
 
-`gen_helm_chart.py`
+[gen_helm_chart.py](https://github.com/avkcode/vault/blob/main/gen_helm_chart.py)
 Converts Kubernetes YAML to a templated Helm chart with values.yaml.
 
 `GENERATE_HELM_SCRIPT (helm.mk)`
