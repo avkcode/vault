@@ -64,6 +64,9 @@ include $(PARAM_FILE)
 # For example, it might define default values for VAULT_NAMESPACE, DOCKER_IMAGE, or resource allocation (CPU_REQUEST, MEMORY_REQUEST, etc.).
 include global.param
 
+# Example of generating Helm charts
+include helm.mk
+
 ##########
 ##########
 
