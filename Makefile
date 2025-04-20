@@ -77,6 +77,9 @@ include diff.mk
 # Vault specific
 include vault.mk
 
+# Canary
+include canary.mk
+
 ##########
 ##########
 
