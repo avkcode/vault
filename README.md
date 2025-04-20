@@ -13,7 +13,7 @@
 ## Preface
 
 ### Running make without any targets outputs the help:
-```bash
+```make
 make
 Available targets:
   generate-chart    - Generate Helm chart from Kubernetes manifests
@@ -52,9 +52,8 @@ Available targets:
 ```
 
 ### Vault specific targets (vault.mk):
-```
+```make
 Usage: make [target]
-
 Available Targets:
 
   enable-metrics        Enable Prometheus metrics endpoint
