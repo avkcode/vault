@@ -2,12 +2,12 @@
 
 - [Preface](#preface)
 - [How it works](#how-it-works)
-- [Helm Critique](#helm-critique)
-- [Kustomize Critique](#kustomize-critique)
+- [Helm Critique](#helm)
+- [Kustomize Critique](#kustomize)
 - [Alternative Approaches](#alternative-approaches)
-- [KISS (Keep It Simple)](#kiss-keep-it-simple)
+- [KISS (Keep It Simple)](#KISS)
 - [Constraints](#constraints)
-- [Diff Utilities](#diff-utilities)
+- [Diff Utilities](#diff)
 - [Helm Chart Generation](#helm-chart-generation)
 
 ## Preface
