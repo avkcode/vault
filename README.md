@@ -3,7 +3,7 @@
 - [Preface](#preface)
 - [How it works](#how-it-works)
 - [Helm Critique](#helm)
-- [Kustomize Critique](#kustomize)
+- [Kustomize Critique](#Kustomzie)
 - [Alternative Approaches](#alternative-approaches)
 - [KISS (Keep It Simple)](#KISS)
 - [Constraints](#constraints)
