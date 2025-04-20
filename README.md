@@ -1,3 +1,15 @@
+## Table of Contents
+
+- [Preface](#preface)
+- [How it works](#how-it-works)
+- [Helm Critique](#helm-critique)
+- [Kustomize Critique](#kustomize-critique)
+- [Alternative Approaches](#alternative-approaches)
+- [KISS (Keep It Simple)](#kiss-keep-it-simple)
+- [Constraints](#constraints)
+- [Diff Utilities](#diff-utilities)
+- [Helm Chart Generation](#helm-chart-generation)
+
 ## Preface
 
 Running make without any targets outputs the help:
