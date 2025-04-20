@@ -17,8 +17,6 @@ endif
 
 .PHONY: help
 vault-help: ## Display this help message
-	@echo "Usage: make [target]"
-	@echo ""
 	@echo "Available Targets:"
 	@echo ""
 	@echo "  enable-metrics        Enable Prometheus metrics endpoint"

@@ -13,6 +13,7 @@ endif
 .PHONY: help
 help:
 	@echo "Available targets:"
+	@echo ""
 	@echo "  generate-chart    - Generate Helm chart from Kubernetes manifests"
 	@echo "  template          - Generate Kubernetes manifests from templates"
 	@echo "  apply             - Apply generated manifests to the Kubernetes cluster"
