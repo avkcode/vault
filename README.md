@@ -12,7 +12,7 @@
 
 ## Preface
 
-Running make without any targets outputs the help:
+### Running make without any targets outputs the help:
 ```bash
 make
 Available targets:
@@ -50,6 +50,43 @@ Available targets:
   diff-params       - Compare parameters between two environments
   help              - Display this help message
 ```
+
+### Vault specific targets (vault.mk):
+```
+Usage: make [target]
+
+Available Targets:
+
+  enable-metrics        Enable Prometheus metrics endpoint
+  create-backup         Create a manual backup of Vault's Raft storage
+  restore-backup        Restore Vault from a backup
+  enable-audit          Enable Vault audit logging
+  scale-vault           Scale Vault cluster replicas
+  upgrade-vault         Upgrade Vault version
+  enable-auto-unseal    Configure Vault for auto-unseal
+  enable-raft           Enable Raft storage backend
+  enable-namespace      Enable Vault namespaces
+  enable-ldap           Enable LDAP authentication
+  enable-oidc           Enable OIDC authentication
+  enable-k8s-auth       Enable Kubernetes authentication
+  enable-transit        Enable Transit secrets engine
+  enable-pki            Enable PKI secrets engine
+  enable-aws            Enable AWS secrets engine
+  enable-database       Enable Database secrets engine
+  enable-consul         Enable Consul secrets engine
+  enable-ssh            Enable SSH secrets engine
+  enable-totp           Enable TOTP secrets engine
+  enable-kv             Enable Key/Value secrets engine
+  enable-transform      Enable Transform secrets engine
+
+Utility Targets:
+  build-vault-image     Build a custom Vault Docker image
+  get-vault-ui          Fetch Vault UI access details (Node IP and NodePort)
+  get-vault-keys        Retrieve unseal and root keys for a specific Vault pod
+  exec                  Open an interactive shell in a specific Vault pod
+  logs                  Stream logs from a specific Vault pod
+```
+
 ## How it works
 
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.

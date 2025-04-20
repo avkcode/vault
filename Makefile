@@ -19,10 +19,6 @@ help:
 	@echo "  delete            - Delete Kubernetes resources defined in the manifests"
 	@echo "  validate-%        - Validate a specific manifest using yq, e.g. make validate-rbac"
 	@echo "  print-%           - Print the value of a specific variable"
-	@echo "  get-vault-ui      - Fetch the Vault UI Node IP and NodePort"
-	@echo "  build-vault-image - Build the Vault Docker image"
-	@echo "  exec              - Execute a shell in the vault pod"
-	@echo "  logs              - Stream logs from the vault pod"
 	@echo "  switch-namespace  - Switch the current Kubernetes namespace"
 	@echo "  archive           - Create a git archive"
 	@echo "  bundle            - Create a git bundle"
@@ -76,6 +72,9 @@ include helm.mk
 
 # Diff utils
 include diff.mk
+
+# Vault specific
+include vault.mk
 
 ##########
 ##########
@@ -337,66 +336,6 @@ interactive:
 	@read -p "Enter the environment (dev/sit/uat/prod): " env; \
 	$(MAKE) ENV=$$env apply
 
-VAULT_IMAGE_NAME ?= vault
-VAULT_IMAGE_TAG  ?= latest
-DOCKERFILE_PATH  ?= ./Dockerfile
-
-.PHONY: build-vault-image
-build-vault-image:
-	@echo "Building Vault Docker image..."
-	@docker build -t $(VAULT_IMAGE_NAME):$(VAULT_IMAGE_TAG) -f $(DOCKERFILE_PATH) .
-	@echo "Vault Docker image built successfully: $(VAULT_IMAGE_NAME):$(VAULT_IMAGE_TAG)"
-
-.PHONY: get-vault-ui
-get-vault-ui:
-	@echo "Fetching Vault UI Node IP and NodePort..."
-	@NODE_PORT=$$(kubectl get svc -o jsonpath='{.items[?(@.spec.ports[].name=="http")].spec.ports[?(@.name=="http")].nodePort}'); \
-	NODE_IP=$$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}'); \
-	if [ -z "$$NODE_IP" ]; then \
-		NODE_IP=$$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'); \
-	fi; \
-	echo "Vault UI is accessible at: http://$$NODE_IP:$$NODE_PORT"
-
-.PHONY: get-vault-keys
-get-vault-keys:
-	@echo "Available Vault pods:"
-	@PODS=$$(kubectl get pods -l app.kubernetes.io/name=vault -o jsonpath='{.items[*].metadata.name}'); \
-	echo "$$PODS"; \
-	read -p "Enter the Vault pod name (e.g., vault-0): " POD_NAME; \
-	if echo "$$PODS" | grep -qw "$$POD_NAME"; then \
-		kubectl exec $$POD_NAME -- vault operator init -key-shares=1 -key-threshold=1 -format=json > keys.json; \
-		VAULT_UNSEAL_KEY=$$(cat keys_$$POD_NAME.json | jq -r ".unseal_keys_b64[]"); \
-		echo "Unseal Key: $$VAULT_UNSEAL_KEY"; \
-		VAULT_ROOT_KEY=$$(cat keys.json | jq -r ".root_token"); \
-		echo "Root Token: $$VAULT_ROOT_KEY"; \
-	else \
-		echo "Error: Pod '$$POD_NAME' not found."; \
-	fi
-
-.PHONY: exec
-exec:
-	@echo "Available Vault pods:"
-	@PODS=$$(kubectl get pods -l app.kubernetes.io/name=vault -o jsonpath='{.items[*].metadata.name}'); \
-	echo "$$PODS"; \
-	read -p "Enter the Vault pod name (e.g., vault-0): " POD_NAME; \
-	if echo "$$PODS" | grep -qw "$$POD_NAME"; then \
-		kubectl exec -it $$POD_NAME -- /bin/sh; \
-	else \
-		echo "Error: Pod '$$POD_NAME' not found."; \
-	fi
-
-.PHONY: logs
-logs:
-	@echo "Available Vault pods:"
-	@PODS=$$(kubectl get pods -l app.kubernetes.io/name=vault -o jsonpath='{.items[*].metadata.name}'); \
-	echo "$$PODS"; \
-	read -p "Enter the Vault pod name (e.g., vault-0): " POD_NAME; \
-	if echo "$$PODS" | grep -qw "$$POD_NAME"; then \
-		kubectl logs -f $$POD_NAME; \
-	else \
-		echo "Error: Pod '$$POD_NAME' not found."; \
-	fi
-
 .PHONY: show-params
 show-params:
 	@echo "Contents of $(PARAM_FILE):"
@@ -510,24 +449,3 @@ package:
 	TAR_FILE="$$DIR_NAME.tar.gz"; \
 	tar -czvf $$TAR_FILE .; \
 	echo "Archive created successfully: $$TAR_FILE"
-
-.PHONY: diff-environments
-diff-environments: ## Compare manifests between two environments
-	@echo "Comparing manifests between two environments..."
-	@echo "Available environments: $(ALLOWED_ENVS)"; \
-	read -p "Enter first environment: " env1; \
-	read -p "Enter second environment: " env2; \
-	if [ "$$env1" = "$$env2" ]; then \
-		echo "Cannot compare the same environment"; \
-		exit 1; \
-	fi; \
-	mkdir -p tmp/diff; \
-	$(MAKE) --no-print-directory ENV=$$env1 template > tmp/diff/manifests.$$env1.yaml; \
-	$(MAKE) --no-print-directory ENV=$$env2 template > tmp/diff/manifests.$$env2.yaml; \
-	diff -u tmp/diff/manifests.$$env1.yaml tmp/diff/manifests.$$env2.yaml > tmp/diff/environments.diff || true; \
-	if [ -s tmp/diff/environments.diff ]; then \
-		echo "Differences between $$env1 and $$env2 environments:"; \
-		bat --paging=never -l diff tmp/diff/environments.diff; \
-	else \
-		echo "No differences found between $$env1 and $$env2 environments"; \
-	fi
