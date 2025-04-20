@@ -4,7 +4,7 @@
 - [How it works](#how-it-works)
 - [Helm Critique](#helm)
 - [Kustomize Critique](#Kustomzie)
-- [Alternative Approaches](#alternative-approaches)
+- [Alternative Approaches](#Other-approaches)
 - [KISS (Keep It Simple)](#KISS)
 - [Constraints](#constraints)
 - [Diff Utilities](#diff)
