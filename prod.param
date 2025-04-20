@@ -1,0 +1,47 @@
+# ============================================================================
+# Purpose: This Makefile contains configuration variables for deploying HashiCorp Vault 
+#          in a Kubernetes environment. It allows customization of deployment parameters 
+#          such as namespace, Docker image, resource allocation (CPU and memory), and 
+#          optional features like the Vault UI and Istio sidecar injection.
+
+# Namespace where Vault will be deployed
+VAULT_NAMESPACE ?= CHANGEME
+# Explanation: This defines the Kubernetes namespace where Vault resources will be created. 
+# Default value is "vault-dev". You can override this value when invoking the Makefile.
+
+# Docker image for Vault
+DOCKER_IMAGE ?= hashicorp/vault:1.18.0
+# Explanation: Specifies the Docker image and version of Vault to use.
+# Default value is "hashicorp/vault:1.18.0". Ensure this matches the desired Vault version.
+
+# Number of replicas for Vault deployment
+REPLICA_NUM := 1
+# Explanation: Defines the number of Vault pods (replicas) to run in the cluster.
+# Default value is 1, which means only one instance of Vault will be deployed.
+
+# Enable Vault UI
+VAULT_UI := false
+# Explanation: Determines whether the Vault UI should be enabled.
+# Set to "true" to enable the Vault web interface; default is "false".
+
+# CPU request for Vault pods
+CPU_REQUEST ?= "2000m"
+# Explanation: Specifies the minimum amount of CPU resources that each Vault pod requests from the Kubernetes scheduler.
+# Default value is "2000m" (2 CPU cores).
+
+# Memory request for Vault pods
+MEMORY_REQUEST ?= "512Mi"
+# Explanation: Specifies the minimum amount of memory resources that each Vault pod requests from the Kubernetes scheduler.
+# Default value is "512Mi" (512 MB).
+
+# CPU limit for Vault pods
+CPU_LIMIT ?= "2000m"
+# Explanation: Defines the maximum amount of CPU resources that each Vault pod is allowed to consume.
+# Default value is "1000m" (1 CPU core). This ensures that Vault does not exceed this limit.
+
+# Memory limit for Vault pods
+MEMORY_LIMIT ?= "1024Mi"
+# Explanation: Defines the maximum amount of memory resources that each Vault pod is allowed to consume.
+# Default value is "1024Mi" (1 GB). This prevents Vault from using more memory than specified.
+
+ENABLE_ISTIO_SIDECAR ?= 'true'

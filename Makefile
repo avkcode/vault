@@ -39,6 +39,12 @@ help:
 	@echo "  validate-client   - Validate JSON manifests against the Kubernetes API (client-side)"
 	@echo "  list-vars         - List all non-built-in variables, their origins, and values."
 	@echo "  package           - Create a tar.gz archive of the entire directory"
+	@echo "  diff              - Interactive diff selection menu"
+	@echo "  diff-live         - Compare live cluster state with generated manifests"
+	@echo "  diff-previous     - Compare previous applied manifests with current generated manifests"
+	@echo "  diff-revisions    - Compare manifests between two git revisions"
+	@echo "  diff-environments - Compare manifests between two environments"
+	@echo "  diff-params       - Compare parameters between two environments"
 	@echo "  help              - Display this help message"
 
 ##########
@@ -67,6 +73,9 @@ include global.param
 
 # Example of generating Helm charts
 include helm.mk
+
+# Diff utils
+include diff.mk
 
 ##########
 ##########
@@ -501,3 +510,24 @@ package:
 	TAR_FILE="$$DIR_NAME.tar.gz"; \
 	tar -czvf $$TAR_FILE .; \
 	echo "Archive created successfully: $$TAR_FILE"
+
+.PHONY: diff-environments
+diff-environments: ## Compare manifests between two environments
+	@echo "Comparing manifests between two environments..."
+	@echo "Available environments: $(ALLOWED_ENVS)"; \
+	read -p "Enter first environment: " env1; \
+	read -p "Enter second environment: " env2; \
+	if [ "$$env1" = "$$env2" ]; then \
+		echo "Cannot compare the same environment"; \
+		exit 1; \
+	fi; \
+	mkdir -p tmp/diff; \
+	$(MAKE) --no-print-directory ENV=$$env1 template > tmp/diff/manifests.$$env1.yaml; \
+	$(MAKE) --no-print-directory ENV=$$env2 template > tmp/diff/manifests.$$env2.yaml; \
+	diff -u tmp/diff/manifests.$$env1.yaml tmp/diff/manifests.$$env2.yaml > tmp/diff/environments.diff || true; \
+	if [ -s tmp/diff/environments.diff ]; then \
+		echo "Differences between $$env1 and $$env2 environments:"; \
+		bat --paging=never -l diff tmp/diff/environments.diff; \
+	else \
+		echo "No differences found between $$env1 and $$env2 environments"; \
+	fi

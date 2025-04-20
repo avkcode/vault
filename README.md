@@ -13,6 +13,7 @@ The Makefile has a bunch of **targets** (commands you can run). Each target do
 ```
 make
 Available targets:
+  generate-chart    - Generate Helm chart from Kubernetes manifests
   template          - Generate Kubernetes manifests from templates
   apply             - Apply generated manifests to the Kubernetes cluster
   delete            - Delete Kubernetes resources defined in the manifests
@@ -38,6 +39,12 @@ Available targets:
   validate-client   - Validate JSON manifests against the Kubernetes API (client-side)
   list-vars         - List all non-built-in variables, their origins, and values.
   package           - Create a tar.gz archive of the entire directory
+  diff              - Interactive diff selection menu
+  diff-live         - Compare live cluster state with generated manifests
+  diff-previous     - Compare previous applied manifests with current generated manifests
+  diff-revisions    - Compare manifests between two git revisions
+  diff-environments - Compare manifests between two environments
+  diff-params       - Compare parameters between two environments
   help              - Display this help message
 ```
 
@@ -130,6 +137,17 @@ Converts Kubernetes YAML to a templated Helm chart with values.yaml.
 
 `generate-chart (helm.mk)`
 This target will auto-generate a Helm chart from YAML.
+
+## diff
+
+Advanced diff capabilities to compare Kubernetes manifests across different states: live cluster vs generated, previous vs current, git revisions, and environments.
+
+diff - Interactive diff menu
+diff-live - Compare live cluster vs generated manifests
+diff-previous - Compare previous vs current manifests
+diff-revisions - Compare between git revisions
+diff-environments - Compare manifests across environments
+diff-params - Compare parameter files between environments
 
 ## Unseal Script and Dockerfile
 
