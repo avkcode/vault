@@ -55,7 +55,6 @@ Available targets:
 ```make
 Usage: make [target]
 Available Targets:
-
   enable-metrics        Enable Prometheus metrics endpoint
   create-backup         Create a manual backup of Vault's Raft storage
   restore-backup        Restore Vault from a backup
