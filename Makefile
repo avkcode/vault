@@ -5,6 +5,7 @@ ifeq ($(DEBUG),1)
 	MAKEFLAGS += --no-print-directory
 	MAKEFLAGS += --keep-going
 	MAKEFLAGS += --ignore-errors
+	.SHELLFLAGS = -x -c
 endif
 
 # Default goal
@@ -85,7 +86,7 @@ define rbac
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: vault-service-account
+  name: ${VAULT_SERVICE_ACCOUNT_NAME} 
   namespace: ${VAULT_NAMESPACE}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -211,7 +212,7 @@ spec:
       annotations:
         sidecar.istio.io/inject: ${ENABLE_ISTIO_SIDECAR}
     spec:
-      serviceAccountName: vault
+      serviceAccountName: ${VAULT_SERVICE_ACCOUNT_NAME} 
       securityContext:
         runAsNonRoot: true
         runAsGroup: 1000
@@ -558,3 +559,10 @@ diff-params: ## Compare parameters between two environments
 	else \
 		echo "No parameter differences between $$env1 and $$env2"; \
 	fi
+
+# Target to print all variables
+print-variables:
+	@echo "Printing all variables:"
+	@$(foreach var,$(.VARIABLES), \
+		$(info $(var) = $($(var))) \
+	)

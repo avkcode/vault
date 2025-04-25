@@ -9,6 +9,12 @@ VAULT_NAMESPACE ?= CHANGEME
 # Explanation: This defines the Kubernetes namespace where Vault resources will be created. 
 # Default value is "vault-dev". You can override this value when invoking the Makefile.
 
+# ServiceAccount name for Vault
+VAULT_SERVICE_ACCOUNT_NAME ?= vault-service-account
+# Explanation: This defines the name of the ServiceAccount that will be used by Vault pods.
+# Default value is "vault-service-account" to match your RBAC definitions.
+# Can be overridden when invoking the Makefile if needed.
+
 # Docker image for Vault
 DOCKER_IMAGE ?= hashicorp/vault:1.18.0
 # Explanation: Specifies the Docker image and version of Vault to use.
