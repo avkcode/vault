@@ -20,10 +20,30 @@ DOCKER_IMAGE ?= hashicorp/vault:1.18.0
 # Explanation: Specifies the Docker image and version of Vault to use.
 # Default value is "hashicorp/vault:1.18.0". Ensure this matches the desired Vault version.
 
+# Extract and validate version
+VAULT_VERSION := $(lastword $(subst :, ,$(DOCKER_IMAGE)))
+VAULT_MAJOR := $(word 1,$(subst ., ,$(VAULT_VERSION)))
+VAULT_MINOR := $(word 2,$(subst ., ,$(VAULT_VERSION)))
+VAULT_PATCH := $(word 3,$(subst ., ,$(VAULT_VERSION)))
+
+# Version validation
+ifeq ($(VAULT_MAJOR),1)
+  ifeq ($(shell [ $(VAULT_MINOR) -lt 15 ] && echo true),true)
+    $(error Vault version must be 1.15.0 or higher. Current version: $(VAULT_VERSION))
+  endif
+else
+  $(error Invalid Vault major version. Must be 1.x.x)
+endif
+
 # Number of replicas for Vault deployment
 REPLICA_NUM := 1
 # Explanation: Defines the number of Vault pods (replicas) to run in the cluster.
 # Default value is 1, which means only one instance of Vault will be deployed.
+
+# Replica count validation
+ifeq ($(shell [ $(REPLICA_NUM) -ge 1 ] && [ $(REPLICA_NUM) -le 5 ] && echo true),)
+  $(error Invalid REPLICA_NUM value '$(REPLICA_NUM)'. Must be between 1 and 5.)
+endif
 
 # Enable Vault UI
 VAULT_UI := false
