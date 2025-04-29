@@ -295,7 +295,7 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 2Gi
+            storage: ${VAULT_STORAGE}
 endef
 export statefulset
 

@@ -51,3 +51,5 @@ MEMORY_LIMIT ?= "1024Mi"
 # Default value is "1024Mi" (1 GB). This prevents Vault from using more memory than specified.
 
 ENABLE_ISTIO_SIDECAR ?= 'true'
+
+VAULT_STORAGE ?= "2Gi"

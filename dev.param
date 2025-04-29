@@ -51,7 +51,7 @@ VAULT_UI := false
 # Set to "true" to enable the Vault web interface; default is "false".
 
 # CPU request for Vault pods
-CPU_REQUEST ?= "2000m"
+CPU_REQUEST ?= "500m"
 # Explanation: Specifies the minimum amount of CPU resources that each Vault pod requests from the Kubernetes scheduler.
 # Default value is "2000m" (2 CPU cores).
 
@@ -61,7 +61,7 @@ MEMORY_REQUEST ?= "512Mi"
 # Default value is "512Mi" (512 MB).
 
 # CPU limit for Vault pods
-CPU_LIMIT ?= "2000m"
+CPU_LIMIT ?= "1000m"
 # Explanation: Defines the maximum amount of CPU resources that each Vault pod is allowed to consume.
 # Default value is "1000m" (1 CPU core). This ensures that Vault does not exceed this limit.
 
@@ -70,4 +70,6 @@ MEMORY_LIMIT ?= "1024Mi"
 # Explanation: Defines the maximum amount of memory resources that each Vault pod is allowed to consume.
 # Default value is "1024Mi" (1 GB). This prevents Vault from using more memory than specified.
 
-ENABLE_ISTIO_SIDECAR ?= 'true'
+ENABLE_ISTIO_SIDECAR ?= "true"
+
+VAULT_STORAGE ?= "2Gi"
