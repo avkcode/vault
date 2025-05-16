@@ -4,7 +4,8 @@
 
 - [Preface](#preface)
 - [How It Works](#how-it-works)
-- [Helm Critique](#helm-critique)
+- [Comparasing](#debugging-and-transparency)
+- [Helm](#Helm)
 - [Kustomize Critique](#kustomize-critique)
 - [Alternative Approaches](#alternative-approaches)
 - [KISS Principles](#kiss-principles)
@@ -13,6 +14,7 @@
 - [Diff Utilities](#diff-utilities)
 - [Helm Chart Generation](#helm-chart-generation)
 - [Conclusion](#conclusion)
+
 ## Preface
 
 Modern Kubernetes deployment methodologies have grown increasingly complex, layering abstraction upon abstraction in pursuit of flexibility. This article challenges that trajectory by examining how fundamental Unix tools combined with Makefiles can provide a more transparent and maintainable alternative to popular solutions like Helm and Kustomize.
