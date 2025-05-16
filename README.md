@@ -1,6 +1,5 @@
 
 [![Back to the Future](https://e.radikal.host/2025/05/16/i-might-be-very-late-realize-this-but-i-just-found-they-v0-rekrb8d8ngja1.jpg.webp)](https://radikal.host/i/IrPiQD)
-
 ## Table of Contents
 
 - [Preface](#preface)
@@ -488,6 +487,278 @@ ifeq ($(shell [ $(MEMORY_LIMIT_VALUE) -ge 128 ] && [ $(MEMORY_LIMIT_VALUE) -le 4
 endif
 ```
 
+
+## Labels
+
+Using Make for Kubernetes deployments offers greater flexibility compared to Helm, as it allows for fully customizable workflows without enforcing a rigid structure. While Helm is designed specifically for Kubernetes and provides a standardized templating system, it can feel restrictive for non-standard or highly dynamic use cases. With Make, you can dynamically generate lists of labels and annotations programmatically, avoiding the need to manually define them in manifests. This approach ensures consistency and reduces repetitive work by leveraging variables, environment data, and tools like Git metadata. Additionally, Make integrates seamlessly with external scripts and tools, enabling more complex logic and automation that Helm’s opinionated framework might not easily support.
+
+Example:
+```make
+# Extract Git metadata
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+GIT_REPO_URL := $(shell git config --get remote.origin.url || echo "local-repo")
+ENV_LABEL := app.environment:$(ENV)
+GIT_BRANCH_LABEL := app.git/branch:$(GIT_BRANCH)
+GIT_COMMIT_LABEL := app.git/commit:$(GIT_COMMIT)
+GIT_REPO_LABEL := app.git/repo:$(GIT_REPO_URL)
+TEAM_LABEL := app.team:devops
+OWNER_LABEL := app.owner:engineering
+DEPLOYMENT_LABEL := app.deployment:nginx-controller
+VERSION_LABEL := app.version:v1.23.0
+BUILD_TIMESTAMP_LABEL := app.build-timestamp:$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+RELEASE_LABEL := app.release:stable
+REGION_LABEL := app.region:us-west-2
+ZONE_LABEL := app.zone:a
+CLUSTER_LABEL := app.cluster:eks-prod
+SERVICE_TYPE_LABEL := app.service-type:LoadBalancer
+INSTANCE_LABEL := app.instance:nginx-controller-instance
+
+# Combine all labels into a single list
+LABELS := \
+  $(ENV_LABEL) \
+  $(GIT_BRANCH_LABEL) \
+  $(GIT_COMMIT_LABEL) \
+  $(GIT_REPO_LABEL) \
+  $(TEAM_LABEL) \
+  $(OWNER_LABEL) \
+  $(DEPLOYMENT_LABEL) \
+  $(VERSION_LABEL) \
+  $(BUILD_TIMESTAMP_LABEL) \
+  $(RELEASE_LABEL) \
+  $(REGION_LABEL) \
+  $(ZONE_LABEL) \
+  $(CLUSTER_LABEL) \
+  $(SERVICE_TYPE_LABEL) \
+  $(INSTANCE_LABEL) \
+  $(DESCRIPTION_LABEL)
+
+define generate_labels
+$(shell printf "    %s\n" $(patsubst %:,%: ,$(LABELS)))
+endef
+
+# Example target to print the labels in YAML format
+print-labels:
+	@echo "metadata:"
+	@echo "  labels:"
+	@$(foreach label,$(LABELS),echo "    $(shell echo $(label) | sed 's/:/=/; s/=/:\ /')";)
+```
+
+This will output:
+```
+make -f test.mk
+metadata:
+  labels:
+    app.environment:
+    app.git/branch: main
+    app.git/commit: 0158245
+    app.git/repo: https://github.com/avkcode/vault.git
+    app.team: devops
+    app.owner: engineering
+    app.deployment: nginx-controller
+    app.version: v1.23.0
+    app.build-timestamp: 2025-04-22T12:38:58Z
+    app.release: stable
+    app.region: us-west-2
+    app.zone: a
+    app.cluster: eks-prod
+    app.service-type: LoadBalancer
+    app.instance: nginx-controller-instance
+```
+
+Using with manifests:
+```make
+efine deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+$(call generate_labels)
+  name: release-name-ingress-nginx-controller
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: controller
+  replicas: 1
+  revisionHistoryLimit: 10
+  minReadySeconds: 0
+  template:
+    metadata:
+      labels:
+    $(call generate_labels)
+    spec:
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: controller
+          image: registry.k8s.io/ingress-nginx/controller:v1.12.1@sha256:d2fbc4ec70d8aa2050dd91a91506e998765e86c96f32cffb56c503c9c34eed5b
+          imagePullPolicy: IfNotPresent
+          lifecycle: 
+            preStop:
+              exec:
+                command:
+                - /wait-shutdown
+          args: 
+            - /nginx-ingress-controller
+            - --publish-service=$(POD_NAMESPACE)/release-name-ingress-nginx-controller
+            - --election-id=release-name-ingress-nginx-leader
+            - --controller-class=k8s.io/ingress-nginx
+            - --ingress-class=nginx
+            - --configmap=$(POD_NAMESPACE)/release-name-ingress-nginx-controller
+            - --validating-webhook=:8443
+            - --validating-webhook-certificate=/usr/local/certificates/cert
+            - --validating-webhook-key=/usr/local/certificates/key
+          securityContext: 
+            runAsNonRoot: true
+            runAsUser: 101
+            runAsGroup: 82
+            allowPrivilegeEscalation: false
+            seccompProfile: 
+              type: RuntimeDefault
+            capabilities:
+              drop:
+              - ALL
+              add:
+              - NET_BIND_SERVICE
+            readOnlyRootFilesystem: false
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: LD_PRELOAD
+              value: /usr/local/lib/libmimalloc.so
+          livenessProbe: 
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe: 
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+            - name: https
+              containerPort: 443
+              protocol: TCP
+            - name: webhook
+              containerPort: 8443
+              protocol: TCP
+          volumeMounts:
+            - name: webhook-cert
+              mountPath: /usr/local/certificates/
+              readOnly: true
+          resources: 
+            requests:
+              cpu: 100m
+              memory: 90Mi
+      nodeSelector: 
+        kubernetes.io/os: linux
+      serviceAccountName: release-name-ingress-nginx
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: 300
+      volumes:
+        - name: webhook-cert
+          secret:
+            secretName: release-name-ingress-nginx-admission
+endef
+export deployment
+```
+
+With general-purpose coding, dynamically generating labels based on parameters like target environment (DEV/PROD/STAGE) is straightforward—just define rules and inject values at runtime. Tools aren't needed for such simple string manipulation.
+```
+make validate-configmap
+---
+apiVersion: v1
+ kind: ConfigMap
+ metadata:
+ labels: app.environment:dev     app.git/branch:main     app.git/commit:af4eae9     app.git/repo:https://github.com/avkcode/nginx.git     app.team:devops     app.critical:false     app.sla:best-effort
+ name: release-name-ingress-nginx-controller
+ namespace: default
+```
+By default DEV dev `app.team:devops app.critical:false app.sla:best-effort`
+
+Adds `app.team:devops app.critical:true app.sla:tier-1`
+```
+ENV=prod make validate-configmap
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels: app.environment:prod     app.git/branch:main     app.git/commit:af4eae9     app.git/repo:https://github.com/avkcode/nginx.git     app.team:devops     app.critical:true     app.sla:tier-1
+  name: release-name-ingress-nginx-controller
+  namespace: default
+```
+
+Code:
+```make
+# Validate and set environment
+VALID_ENVS := dev sit uat prod
+ENV ?= dev
+
+ifeq ($(filter $(ENV),$(VALID_ENVS)),)
+$(error Invalid ENV. Valid values are: $(VALID_ENVS))
+endif
+
+# Environment-specific settings
+ifeq ($(ENV),prod)
+APP_PREFIX := prod
+EXTRA_LABELS := app.critical:true app.sla:tier-1
+else ifeq ($(ENV),uat)
+APP_PREFIX := uat
+EXTRA_LABELS := app.critical:false app.sla:tier-2
+else ifeq ($(ENV),sit)
+APP_PREFIX := sit
+EXTRA_LABELS := app.critical:false app.sla:tier-3
+else
+APP_PREFIX := dev
+EXTRA_LABELS := app.critical:false app.sla:best-effort
+endif
+
+# Extract Git metadata
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+GIT_REPO := $(shell git config --get remote.origin.url)
+ENV_LABEL := app.environment:$(ENV)
+GIT_BRANCH_LABEL := app.git/branch:$(GIT_BRANCH)
+GIT_COMMIT_LABEL := app.git/commit:$(GIT_COMMIT)
+GIT_REPO_LABEL := app.git/repo:$(GIT_REPO)
+TEAM_LABEL := app.team:devops
+
+LABELS := \
+    $(ENV_LABEL) \
+    $(GIT_BRANCH_LABEL) \
+    $(GIT_COMMIT_LABEL) \
+    $(GIT_REPO_LABEL) \
+    $(TEAM_LABEL) \
+    $(EXTRA_LABELS)
+
+define generate_labels
+$(shell printf "    %s\n" $(patsubst %:,%: ,$(LABELS)))
+endef
+```
+
 ## diff
 
 Advanced diff capabilities to compare Kubernetes manifests across different states: live cluster vs generated, previous vs current, git revisions, and environments.
@@ -500,7 +771,6 @@ diff-environments - Compare manifests across environments
 diff-params - Compare parameter files between environments
 
 [![diff](https://e.radikal.host/2025/04/20/Screenshot-2025-04-20-at-12.34.177b52f3271477030f.png)](https://radikal.host/i/IW7oZX)
-
 ## Helm charts
 
 If you’re absolutely required to distribute a Helm chart but don’t have one pre-made, no worries—it’s totally possible to generate one from the manifests produced by this Makefile. The gen_helm_chart.py script (referenced via include helm.mk) automates this process. It takes the Kubernetes manifests generated by the Makefile and packages them into a Helm chart. This way, you can still meet the requirement for a Helm chart while leveraging the existing templates and workflows in the Makefile.
