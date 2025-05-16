@@ -1,18 +1,103 @@
-[![tempImageLrI3Pj.jpg](https://e.radikal.host/2025/05/16/tempImageLrI3Pj.jpg)](https://radikal.host/i/IrnRiu)
+
+[![Back to the Future](https://e.radikal.host/2025/05/16/i-might-be-very-late-realize-this-but-i-just-found-they-v0-rekrb8d8ngja1.jpg.webp)](https://radikal.host/i/IrPiQD)
 
 ## Table of Contents
 
 - [Preface](#preface)
-- [How it works](#how-it-works)
-- [Helm Critique](#helm)
-- [Kustomize Critique](#Kustomzie)
-- [Alternative Approaches](#Other-approaches)
-- [KISS (Keep It Simple)](#KISS)
+  - [Running make without targets](#running-make-without-targets)
+  - [Vault-specific targets](#vault-specific-targets)
+- [How It Works](#how-it-works)
+  - [make apply workflow](#make-apply-workflow)
+  - [Environment configuration](#environment-configuration)
+- [Helm Critique](#helm-critique)
+  - [Templating complexity](#templating-complexity)
+  - [Dependency issues](#dependency-issues)
+- [Kustomize Critique](#kustomize-critique)
+  - [Patch management](#patch-management)
+- [Alternative Approaches](#alternative-approaches)
+  - [pkl](#pkl)
+  - [Hybrid workflows](#hybrid-workflows)
+- [KISS Principles](#kiss-principles)
+  - [Makefile examples](#makefile-examples)
 - [Constraints](#constraints)
-- [Diff Utilities](#diff)
-- [Helm Chart Generation](#helm-charts)
-
+  - [Environment validation](#environment-validation)
+  - [Resource limits](#resource-limits)
+- [Diff Utilities](#diff-utilities)
+  - [Interactive diff](#interactive-diff)
+  - [Comparison types](#comparison-types)
+- [Helm Chart Generation](#helm-chart-generation)
+- [Conclusion](#conclusion)
 ## Preface
+
+Modern Kubernetes deployment methodologies have grown increasingly complex, layering abstraction upon abstraction in pursuit of flexibility. This article challenges that trajectory by examining how fundamental Unix tools combined with Makefiles can provide a more transparent and maintainable alternative to popular solutions like Helm and Kustomize.
+
+What you'll find here is a way to deploy applications where you can always see the actual YAML being applied to your cluster, where debugging means looking at real configuration rather than guessing what a template might generate, and where changes follow predictable paths rather than disappearing into abstraction layers.
+
+If you've ever spent an afternoon chasing a Helm templating error only to discover it was caused by a misplaced whitespace, or wasted hours debugging why your Kustomize overlay isn't applying correctly, you'll understand why we need simpler approaches to Kubernetes deployments. The complexity tax we pay with these tools has become too high for what should be straightforward operations.
+
+What follows is not a prescriptive framework, but rather an examination of core patterns that can be adapted to various deployment scenarios. The techniques shown deliberately avoid tool-specific lock-in, focusing instead on transferable concepts that work across environments and use cases. Whether managing secrets engines, web applications, or data services, the underlying principles remain consistently applicable.
+
+This is about getting back to basics - not because simple is trendy, but because simple works. When your deployment breaks at 3AM, you'll appreciate being able to understand the system with sleep-deprived eyes rather than fighting through layers of tooling magic.
+
+---
+
+[![Back to the Future.](https://e.radikal.host/2025/05/16/1-2.jpg.webp)](https://radikal.host/i/IrPLdQ)
+## Helm
+
+Helm was designed to simplify Kubernetes application deployment, but it has become another abstraction layer that introduces unnecessary complexity. Helm charts often hide the underlying process with layers of Go templating and nested `values.yaml` files, making it difficult to understand what is actually being deployed. Debugging often requires navigating through these files, which can obscure the true configuration. This approach shifts from infrastructure-as-code to something less transparent, making it harder to manage and troubleshoot.
+
+```yaml
+  imagePullPolicy: {{ .Values.defaultBackend.image.pullPolicy }}
+{{- if .Values.defaultBackend.extraArgs }}
+  args:
+  {{- range $key, $value := .Values.defaultBackend.extraArgs }}
+    {{- /* Accept keys without values or with false as value */}}
+    {{- if eq ($value | quote | len) 2 }}
+    - --{{ $key }}
+    {{- else }}
+    - --{{ $key }}={{ $value }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+```
+
+YAML itself isn’t inherently problematic, and with modern IDE support, schema validation, and linting tools, it can be a clear and effective configuration format. The issues arise when YAML is combined with Go templating, as seen in Helm. While each component is reasonable on its own, their combination creates complexity. Go templates in YAML introduce fragile constructs, where whitespace sensitivity and imperative logic make configurations difficult to read, maintain, and test. This blending of logic and data undermines transparency and predictability, which are crucial in infrastructure management.
+
+Helm's dependency management also adds unnecessary complexity. Dependencies are fetched into a `charts/` directory, but version pinning and overrides often become brittle. Instead of clean component reuse, Helm encourages nested charts with their own `values.yaml`, which complicates customization and requires understanding multiple charts to override a single value. In practice, Helm’s dependency management can feel like nesting shell scripts inside other shell scripts.
+
+## Kustomzie
+
+[Kustomize](https://github.com/kubernetes-sigs/kustomize) offers a declarative approach to managing Kubernetes configurations, but its structure often blurs the line between declarative and imperative. Kustomize applies transformations to a base set of Kubernetes manifests, where users define overlays and patches that _appear_ declarative, but are actually order-dependent and procedural.
+
+It supports various patching mechanisms, which require a deep understanding of Kubernetes objects and can lead to verbose, hard-to-maintain configurations. Features like generators pulling values from files or environment variables introduce dynamic behavior, further complicating the system. When built-in functionality falls short, users can use KRM (Kubernetes Resource Model) functions for transformations, but these are still defined in structured data, leading to a complex layering of data-as-code that lacks clarity.
+
+While Kustomize avoids explicit templating, it introduces a level of orchestration that can be just as opaque and requires extensive knowledge to ensure predictable results.
+
+---
+
+In many Kubernetes environments, the configuration pipeline has become a complex chain of tools and abstractions. What the Kubernetes API receives — plain YAML or JSON — is often the result of multiple intermediate stages, such as Helm charts, Helmsman, or GitOps systems like Flux or Argo CD. As these layers accumulate, they can obscure the final output, preventing engineers from easily accessing the fully rendered manifests.
+
+This lack of visibility makes it hard to verify what will actually be deployed, leading to operational challenges and a loss of confidence in the system. When teams cannot inspect or reproduce the deployment artifacts, it becomes difficult to review changes or troubleshoot issues, ultimately turning a once-transparent process into a black box that complicates debugging and undermines reliability.
+
+## Other approaches
+
+Apple’s [pkl](https://pkl-lang.org/index.html) (short for "Pickle") is a configuration language designed to replace YAML, offering greater flexibility and dynamic capabilities. It includes features like classes, built-in packages, methods, and bindings for multiple languages, as well as IDE integrations, making it resemble a full programming language rather than a simple configuration format.
+
+However, the complexity of pkl may be unnecessary. Its extensive documentation and wide range of features may be overkill for most use cases, especially when YAML itself can handle configuration management needs. If the issue is YAML’s repetitiveness, a simpler approach, such as sandboxed JavaScript, could generate clean YAML without the overhead of a new language.
+## KISS
+
+[![Delorean](https://e.radikal.host/2025/05/16/original.jpg)
+
+Kubernetes configuration management is ultimately a string manipulation problem. Makefiles, combined with standard Unix tools, are ideal for solving this. Make provides a declarative way to define steps to generate Kubernetes manifests, with each step clearly outlined and only re-run when necessary. Tools like `sed`, `awk`, `cat`, and `jq` excel at text transformation and complement Make’s simplicity, allowing for quick manipulation of YAML or JSON files.
+
+This approach is transparent — you can see exactly what each command does and debug easily when needed. Unlike more complex tools, which hide the underlying processes, Makefiles and Unix tools provide full control, making the configuration management process straightforward and maintainable.
+
+https://github.com/avkcode/vault
+
+HashiCorp Vault is a tool for managing secrets and sensitive data, offering features like encryption, access control, and secure storage. It was used as an example of critical infrastructure deployed on Kubernetes without Helm, emphasizing manual, customizable management of resources.
+
+[This Makefile](https://raw.githubusercontent.com/avkcode/vault/refs/heads/main/Makefile) automates Kubernetes deployment, Docker image builds, and Git operations. It handles environment-specific configurations, validates Kubernetes manifests, and manages Vault resources like Docker image builds, retrieving unseal/root keys, and interacting with Vault pods. It also facilitates Git operations such as creating tags, pushing releases, and generating archives or bundles. The file includes tasks for managing Kubernetes resources like services, statefulsets, and secrets, switching namespaces, and cleaning up generated files. Additionally, it supports interactive deployment sessions, variable listing, and manifest validation both client and server-side.
+
 
 ### Running make without any targets outputs the help:
 ```make
@@ -52,6 +137,86 @@ Available targets:
   diff-params       - Compare parameters between two environments
   help              - Display this help message
 ```
+
+### **Debugging and Transparency**
+
+- **Helm/Kustomize**: Debugging requires understanding intermediate states (e.g., `helm template --debug`, `kustomize build`). Errors are often opaque (e.g., "template rendering failed").
+    
+- **Make**: Every step is explicit. You can inspect intermediate files (e.g., `manifest.yaml`) or run targets like `make print-rbac` to debug.
+  
+```
+# Debug a Helm error:
+helm template vault --debug | less  # Scroll through rendered YAML
+
+# Debug with Make:
+make template > debug.yaml && code debug.yaml  # Directly inspect
+```
+
+### **Security Implications**
+
+- **Helm**: Dynamic templating can introduce injection risks (e.g., untrusted `values.yaml`). Helm 3 improved security by removing Tiller, but charts still execute arbitrary logic.
+    
+- **Make**: Static manifests are safer. Secrets can be managed separately (e.g., `sops`, `vault-agent`).
+  
+```
+# Secure secret handling with Make:
+get-secrets:
+    @vault read -field=token secret/vault-token > .env
+    @kubectl create secret generic vault-secret --from-file=.env
+```
+
+### **GitOps Compatibility**
+
+- **Helm/Kustomize**: Tightly integrated with ArgoCD/Flux but require custom plugins for advanced features (e.g., Helm secrets).
+    
+- **Make**: Works natively with GitOps tools. Manifests are plain YAML/JSON, making drift detection easier.
+    
+
+Example GitOps workflow:
+```
+# With Make:
+git add manifests/
+git commit -m "Update vault config"
+flux reconcile source git vault-repo
+
+# Vs. Helm:
+helm repo update
+helm upgrade vault --values overrides.yaml
+```
+
+### **Extensibility**
+
+- **Helm/Kustomize**: Extending requires learning their DSLs (Go templates, Kustomize patches).
+    
+- **Make**: Easily extended with shell/python scripts. For example, adding Terraform integration:
+
+```
+deploy-infra:
+    @terraform apply -auto-approve
+    @$(MAKE) apply  # Deploy Kubernetes resources after infra
+```
+
+### **Community and Maintenance**
+
+- **Helm**: Large ecosystem but charts often lag behind upstream releases (e.g., `stable/vault` is deprecated).
+    
+- **Make**: No dependency hell. You control the toolchain.
+
+```
+# Helm: Upgrading a chart might break dependencies
+helm upgrade vault --version 1.17.0  # Might fail due to subchart conflicts
+
+# Make: Just update the image tag in Makefile
+DOCKER_IMAGE=hashicorp/vault:1.17.0
+```
+
+### **Future-Proofing**
+
+- **Makefiles** are 40+ years old and won’t disappear. Helm/Kustomize might be replaced (e.g., by `cdk8s`, `pkl`).
+    
+- **Kubernetes-native alternatives**: Tools like `kpt` or `carvel` are emerging, but Make remains a stable baseline.
+
+---
 
 ### Vault specific targets (vault.mk):
 ```make
@@ -148,60 +313,6 @@ CPU_REQUEST="4000m" \
 MEMORY_REQUEST="1024Mi" \
 ENABLE_ISTIO_SIDECAR='false'
 ```
-
-## Helm
-
-Helm was designed to simplify Kubernetes application deployment, but it has become another abstraction layer that introduces unnecessary complexity. Helm charts often hide the underlying process with layers of Go templating and nested `values.yaml` files, making it difficult to understand what is actually being deployed. Debugging often requires navigating through these files, which can obscure the true configuration. This approach shifts from infrastructure-as-code to something less transparent, making it harder to manage and troubleshoot.
-
-```yaml
-  imagePullPolicy: {{ .Values.defaultBackend.image.pullPolicy }}
-{{- if .Values.defaultBackend.extraArgs }}
-  args:
-  {{- range $key, $value := .Values.defaultBackend.extraArgs }}
-    {{- /* Accept keys without values or with false as value */}}
-    {{- if eq ($value | quote | len) 2 }}
-    - --{{ $key }}
-    {{- else }}
-    - --{{ $key }}={{ $value }}
-    {{- end }}
-  {{- end }}
-{{- end }}
-```
-
-YAML itself isn’t inherently problematic, and with modern IDE support, schema validation, and linting tools, it can be a clear and effective configuration format. The issues arise when YAML is combined with Go templating, as seen in Helm. While each component is reasonable on its own, their combination creates complexity. Go templates in YAML introduce fragile constructs, where whitespace sensitivity and imperative logic make configurations difficult to read, maintain, and test. This blending of logic and data undermines transparency and predictability, which are crucial in infrastructure management.
-
-Helm's dependency management also adds unnecessary complexity. Dependencies are fetched into a `charts/` directory, but version pinning and overrides often become brittle. Instead of clean component reuse, Helm encourages nested charts with their own `values.yaml`, which complicates customization and requires understanding multiple charts to override a single value. In practice, Helm’s dependency management can feel like nesting shell scripts inside other shell scripts.
-
-## Kustomzie
-
-[Kustomize](https://github.com/kubernetes-sigs/kustomize) offers a declarative approach to managing Kubernetes configurations, but its structure often blurs the line between declarative and imperative. Kustomize applies transformations to a base set of Kubernetes manifests, where users define overlays and patches that _appear_ declarative, but are actually order-dependent and procedural.
-
-It supports various patching mechanisms, which require a deep understanding of Kubernetes objects and can lead to verbose, hard-to-maintain configurations. Features like generators pulling values from files or environment variables introduce dynamic behavior, further complicating the system. When built-in functionality falls short, users can use KRM (Kubernetes Resource Model) functions for transformations, but these are still defined in structured data, leading to a complex layering of data-as-code that lacks clarity.
-
-While Kustomize avoids explicit templating, it introduces a level of orchestration that can be just as opaque and requires extensive knowledge to ensure predictable results.
-
----
-
-In many Kubernetes environments, the configuration pipeline has become a complex chain of tools and abstractions. What the Kubernetes API receives — plain YAML or JSON — is often the result of multiple intermediate stages, such as Helm charts, Helmsman, or GitOps systems like Flux or Argo CD. As these layers accumulate, they can obscure the final output, preventing engineers from easily accessing the fully rendered manifests.
-
-This lack of visibility makes it hard to verify what will actually be deployed, leading to operational challenges and a loss of confidence in the system. When teams cannot inspect or reproduce the deployment artifacts, it becomes difficult to review changes or troubleshoot issues, ultimately turning a once-transparent process into a black box that complicates debugging and undermines reliability.
-
-## Other approaches
-
-Apple’s [pkl](https://pkl-lang.org/index.html) (short for "Pickle") is a configuration language designed to replace YAML, offering greater flexibility and dynamic capabilities. It includes features like classes, built-in packages, methods, and bindings for multiple languages, as well as IDE integrations, making it resemble a full programming language rather than a simple configuration format.
-
-However, the complexity of pkl may be unnecessary. Its extensive documentation and wide range of features may be overkill for most use cases, especially when YAML itself can handle configuration management needs. If the issue is YAML’s repetitiveness, a simpler approach, such as sandboxed JavaScript, could generate clean YAML without the overhead of a new language.
-## KISS
-
-Kubernetes configuration management is ultimately a string manipulation problem. Makefiles, combined with standard Unix tools, are ideal for solving this. Make provides a declarative way to define steps to generate Kubernetes manifests, with each step clearly outlined and only re-run when necessary. Tools like `sed`, `awk`, `cat`, and `jq` excel at text transformation and complement Make’s simplicity, allowing for quick manipulation of YAML or JSON files.
-
-This approach is transparent — you can see exactly what each command does and debug easily when needed. Unlike more complex tools, which hide the underlying processes, Makefiles and Unix tools provide full control, making the configuration management process straightforward and maintainable.
-
-https://github.com/avkcode/vault
-
-HashiCorp Vault is a tool for managing secrets and sensitive data, offering features like encryption, access control, and secure storage. It was used as an example of critical infrastructure deployed on Kubernetes without Helm, emphasizing manual, customizable management of resources.
-
-[This Makefile](https://raw.githubusercontent.com/avkcode/vault/refs/heads/main/Makefile) automates Kubernetes deployment, Docker image builds, and Git operations. It handles environment-specific configurations, validates Kubernetes manifests, and manages Vault resources like Docker image builds, retrieving unseal/root keys, and interacting with Vault pods. It also facilitates Git operations such as creating tags, pushing releases, and generating archives or bundles. The file includes tasks for managing Kubernetes resources like services, statefulsets, and secrets, switching namespaces, and cleaning up generated files. Additionally, it supports interactive deployment sessions, variable listing, and manifest validation both client and server-side.
 
 ---
 
@@ -325,6 +436,8 @@ get-vault-keys:
 
 ## Constrains
 
+[![Delorean](https://e.radikal.host/2025/05/16/original5.jpg)](https://radikal.host/i/IrSxpr)
+
 When managing complex workflows, especially in DevOps or Kubernetes environments, constraints play a vital role in ensuring consistency, preventing errors, and maintaining control over the build process. In Makefiles, constraints can be implemented to validate inputs, restrict environment configurations, and enforce best practices. Let’s explore how this works with a practical example.
 
 What Are Constraints in Makefiles?
@@ -395,3 +508,9 @@ If you’re absolutely required to distribute a Helm chart but don’t have one 
 ---
 
 Sometimes, the simplest way of using just Unix tools is the best way. By relying on basic utilities like `kubectl`, `jq`, `yq`, and Make, you can create powerful, customizable workflows without the need for heavyweight tools like Helm. These simple, straightforward scripts offer greater control and flexibility. Plus, with LLMs (large language models) like this one, generating and refining code has become inexpensive and easy, making automation accessible. However, when things go wrong, debugging complex tools like Helm can become exponentially more expensive in terms of time and effort. Using minimal tools lets you stay in control, reduce complexity, and make it easier to fix issues when they arise. Sometimes, less really is more.
+
+---
+
+Other examples of usage:
+
+- https://hackernoon.com/fine-tuning-models-with-your-own-data-effortlessly
