@@ -204,6 +204,52 @@ DOCKER_IMAGE=hashicorp/vault:1.17.0
     
 - **Kubernetes-native alternatives**: Tools like `kpt` or `carvel` are emerging, but Make remains a stable baseline.
 
+### Hybrid Templating Flexibility
+
+Combine Unix tools like envsubst, yq, or jq for templating only where needed, avoiding Helm's "all-or-nothing" templating. For example:
+```
+template: 
+    envsubst < template.yaml > manifest.yaml
+    yq e '.metadata.labels += {"env": "${ENV}"}' -i manifest.yaml
+```
+
+### Native Integration with CI/CD Pipelines
+
+Makefiles work seamlessly with any CI system (GitHub Actions, GitLab CI) without requiring plugins or custom runners. Each target (make validate, make apply) can be a standalone CI step 11.
+Contrast with Helm/Kustomize, which often need specialized CI steps (e.g., helm template | kubectl apply).
+
+### Granular Control Over Deployment Order
+
+Makefiles allow explicit definition of dependencies between deployment steps (e.g., ensuring secrets are created before deployments). This avoids race conditions common in Helm/Kustomize where resource ordering can be unpredictable 14.
+Example:
+```
+make
+deploy: create-secrets apply-manifests
+create-secrets:
+    kubectl apply -f secrets/
+apply-manifests:
+    kubectl apply -f manifests/
+```
+
+### Lifecycle Hooks Without CRDs
+
+Execute pre/post-deployment tasks (e.g., database migrations) natively in Makefiles:
+```
+deploy: preflight apply-manifests notify
+preflight:
+    ./scripts/check-dependencies.sh
+notify:
+    curl -X POST ${SLACK_WEBHOOK}
+```
+
+### Version Control Transparency
+
+Every change (Makefile, scripts, manifests) is visible in Git history. Helm/Kustomize obfuscate changes through templating or patches, making git diff less informative
+
+### Gradual Adoption Path
+
+Can incrementally replace Helm/Kustomize by starting with make helm-template targets, then phasing out Helm as needed. No "big bang" migration 
+
 ### Advantages of Make + Unix Tools over ytt
 
 1. **Zero New Syntax**  
