@@ -1,3 +1,5 @@
+[![tempImageLrI3Pj.jpg](https://e.radikal.host/2025/05/16/tempImageLrI3Pj.jpg)](https://radikal.host/i/IrnRiu)
+
 ## Table of Contents
 
 - [Preface](#preface)
