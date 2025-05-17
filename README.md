@@ -796,6 +796,30 @@ If you’re absolutely required to distribute a Helm chart but don’t have one 
 
 ---
 
+## Ingress
+
+The Makefile-based approach simplifies the deployment of Kubernetes ingress resources by consolidating all necessary components into a single, coherent workflow. This method eliminates the need for external tools or complex integrations, allowing you to manage the entire stack through straightforward make commands. The Makefile incorporates definitions for service accounts, roles, role bindings, and ingress-specific configurations, ensuring proper access controls and networking setup. By leveraging environment variables and templating, it dynamically generates the required Kubernetes manifests while maintaining consistency across deployments. This unified approach enables seamless integration between infrastructure provisioning, application deployment, and network configuration, providing a transparent and maintainable solution for managing ingress resources within your Kubernetes environment.
+
+To incorporate the ingress-related Makefile functionality using include, you can structure your Makefile to pull in external files that define various components like service accounts, roles, bindings, and other Kubernetes resources. This allows for better modularity, reusability, and clarity in your deployment pipeline.
+
+Here’s an example of how you can use include to organize and include different parts of your ingress stack:
+```
+.
+├── Makefile
+├── global.param
+├── ingress.mk
+├── rbac.mk
+├── configmap.mk
+└── params/
+    ├── dev.param
+    ├── prod.param
+    └── uat.param
+```
+
+By structuring your Makefile this way, you can easily manage complex deployments while keeping everything modular and transparent.
+
+---
+
 Sometimes, the simplest way of using just Unix tools is the best way. By relying on basic utilities like `kubectl`, `jq`, `yq`, and Make, you can create powerful, customizable workflows without the need for heavyweight tools like Helm. These simple, straightforward scripts offer greater control and flexibility. Plus, with LLMs (large language models) like this one, generating and refining code has become inexpensive and easy, making automation accessible. However, when things go wrong, debugging complex tools like Helm can become exponentially more expensive in terms of time and effort. Using minimal tools lets you stay in control, reduce complexity, and make it easier to fix issues when they arise. Sometimes, less really is more.
 
 ---
