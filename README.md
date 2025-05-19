@@ -71,7 +71,7 @@ This lack of visibility makes it hard to verify what will actually be deployed, 
 
 Apple’s [pkl](https://pkl-lang.org/index.html) (short for "Pickle") is a configuration language designed to replace YAML, offering greater flexibility and dynamic capabilities. It includes features like classes, built-in packages, methods, and bindings for multiple languages, as well as IDE integrations, making it resemble a full programming language rather than a simple configuration format.
 
-However, the complexity of pkl may be unnecessary. Its extensive documentation and wide range of features may be overkill for most use cases, especially when YAML itself can handle configuration management needs. If the issue is YAML’s repetitiveness, a simpler approach, such as sandboxed JavaScript, could generate clean YAML without the overhead of a new language.
+However, the complexity of pkl may be unnecessary. Its extensive documentation and wide range of features may be overkill for most use cases, especially when YAML itself can handle configuration management needs.
 ## KISS
 
 [![Delorean](https://e.radikal.host/2025/05/16/original.jpg)
