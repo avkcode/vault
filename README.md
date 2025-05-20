@@ -1,4 +1,4 @@
--
+--
 [![Back to the Future](https://e.radikal.host/2025/05/16/i-might-be-very-late-realize-this-but-i-just-found-they-v0-rekrb8d8ngja1.jpg.webp)](https://radikal.host/i/IrPiQD)
 ## Table of Contents
 
@@ -370,7 +370,7 @@ Utility Targets:
 ## How it works
 
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.
-```diff
+```
 +---------------+     +----------------+     +-----------------+     +---------------+
 |  make apply   | --> |  Create Release| --> | Apply Manifests | --> | Output Status |
 +---------------+     +----------------+     +-----------------+     +---------------+
