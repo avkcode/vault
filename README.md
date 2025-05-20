@@ -8,7 +8,7 @@
 - [Helm](#Helm)
 - [Kustomize Critique](#kustomize-critique)
 - [Alternative Approaches](#alternative-approaches)
-- [KISS Principles](#kiss-principles)
+- [KISS](#kiss)
 - [Constrains](#constrains)
 - [Labels](#labels)
 - [Diff](#diff)
