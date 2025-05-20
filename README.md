@@ -6,6 +6,7 @@
 - [How It Works](#how-it-works)
 - [Comparasing](#debugging-and-transparency)
 - [Helm](#helm)
+- [Advanced Rollback Strategies](#advanced-rollback-strategies-with-makefiles)
 - [Kustomize](#kustomzie)
 - [ArgoCD](#argo)
 - [Other approaches](#other-approaches)
