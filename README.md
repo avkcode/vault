@@ -799,4 +799,4 @@ Sometimes, the simplest way of using just Unix tools is the best way. By relying
 
 Other examples of usage:
 
-- https://hackernoon.com/fine-tuning-models-with-your-own-data-effortlessly
+- [Fine Tuning Models Effortlessly](https://hackernoon.com/fine-tuning-models-with-your-own-data-effortlessly)
