@@ -169,6 +169,101 @@ delete:
     - Same toolchain for all infrastructure.
 
 
+## Advanced Rollback Strategies with Makefiles
+
+While the basic git checkout + make apply works, let's explore more robust rollback techniques that give you greater control than Helm's built-in rollback mechanism.
+1. Atomic Rollbacks with Git Tags
+```
+# Tag releases during deployment
+make deploy && git tag $(date +%Y%m%d-%H%M)-vault-deploy
+
+# Rollback to last known good version
+git checkout $(git describe --tags --match '*-vault-deploy' --abbrev=0)
+make apply
+```
+
+### Differential Rollback (Partial Reverts)
+```
+# In Makefile
+rollback-%:  # Rollback specific resource
+    git show HEAD~1:manifests/$*.yaml | kubectl apply -f -
+
+# Example: Rollback just the deployment
+make rollback-deployment
+```
+
+### Time-Based Rollback
+```
+# Find the last good config before outage
+git checkout $(git rev-list -n1 --before="2023-12-01 15:00" main)
+make apply
+```
+
+### Automated Health-Check Rollback
+```
+rollback-with-check:
+    @make apply
+    @sleep 30  # Wait for pods to initialize
+    @if ! kubectl rollout status deployment/vault --timeout=60s; then \
+        git checkout HEAD~1; \
+        make apply; \
+        echo "Automatic rollback completed"; \
+    fi
+```
+
+Why This Beats Helm Rollback
+
+- No Hidden State
+- Helm stores rollback info in cluster secrets
+- Makefiles use Git's immutable history
+- Partial Rollbacks
+- Helm rolls back entire releases
+- Make can target specific resources
+
+Pre-Rollback Verification
+```
+pre-rollback-check:
+    @git diff HEAD~1 manifests/ | grep -q 'replicaCount: 3' && \
+      echo "WARNING: Rolling back to 3 replicas"
+```
+
+```mermaid
+sequenceDiagram
+    User->>Git: git tag v1.0
+    User->>Cluster: make apply
+    Cluster->>User: Deployment fails
+    User->>Git: git checkout v1.0
+    User->>Cluster: make apply
+    Cluster->>User: Previous working version restored
+```
+
+Key Advantages Over Helm
+
+| Feature               | Helm                     | Makefile + Git               |
+|-----------------------|--------------------------|------------------------------|
+| Rollback Target       | Entire release           | Any resource/file            |
+| History Storage       | Cluster secrets          | Git repository               |
+| Verification          | Limited                  | Full diff/pre-checks         |
+| Automation            | Basic hooks              | Custom health checks         |
+| Audit Trail           | Helm metadata            | Git commit history           |
+| Speed                 | Medium (needs helm history) | Fast (direct git checkout)|
+| Partial Rollbacks     | ❌ No                   | ✅ Yes                        |
+| Pre-Rollback Checks   | ❌ No                   | ✅ Custom scripts             |
+| Cross-Environment     | Complex (per-cluster)    | Simple (git branches)        |
+| Required Infrastructure| Helm server (v2)        | Just git+kubectl             |
+| Disaster Recovery     | Vulnerable (secrets can be lost) | Immutable (git)      |
+
+#### Pro Tip: Add this to your Makefile for safer rollbacks:
+```
+confirm-rollback:
+    @read -p "Rollback to HEAD~1? (y/n) " ans; \
+    [ "$$ans" = y ] || exit 1
+
+rollback: confirm-rollback
+    git checkout HEAD~1 manifests/
+    make apply
+```
+
 ## Kustomzie
 
 [Kustomize](https://github.com/kubernetes-sigs/kustomize) offers a declarative approach to managing Kubernetes configurations, but its structure often blurs the line between declarative and imperative. Kustomize applies transformations to a base set of Kubernetes manifests, where users define overlays and patches that _appear_ declarative, but are actually order-dependent and procedural.
