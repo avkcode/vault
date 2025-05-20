@@ -220,7 +220,7 @@ Contrast with Helm/Kustomize, which often need specialized CI steps (e.g., helm 
 
 ### Granular Control Over Deployment Order
 
-Makefiles allow explicit definition of dependencies between deployment steps (e.g., ensuring secrets are created before deployments). This avoids race conditions common in Helm/Kustomize where resource ordering can be unpredictable 14.
+Makefiles allow explicit definition of dependencies between deployment steps (e.g., ensuring secrets are created before deployments). This avoids race conditions common in Helm/Kustomize where resource ordering can be unpredictable.
 Example:
 ```
 make
