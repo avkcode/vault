@@ -372,9 +372,9 @@ Utility Targets:
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.
 ```mermaid
 flowchart TD
-    A[make apply] --> B[Create Release: Generates Kubernetes secret with VERSION set to Git commit SHA]
-    B --> C[Apply Manifests: Applies rbac, configmap, services, statefulset using kubectl apply]
-    C --> D[Output Status: Displays status of applied resources]
+    A[make apply] --> B[Create Release: Generates Kubernetes\nsecret with VERSION set to Git commit SHA]
+    B --> C[Apply Manifests: Applies rbac, configmap,\nservices, statefulset using kubectl apply]
+    C --> D[Output Status: Displays status\nof applied resources]
 ```
 Every time you run make apply, the Makefile is designed to automatically trigger the create-release target as part of the process. This ensures that a Kubernetes secret is created with the current Git commit SHA, which helps track the version of the app being deployed. By including this step, the Makefile guarantees that the release information is always up-to-date and stored in the cluster whenever the manifests are applied. This makes it easier to identify which version of the app is running and maintain consistency across deployments. Make delete triggers remove-release target.
 
