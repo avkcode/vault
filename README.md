@@ -370,12 +370,15 @@ Utility Targets:
 ## How it works
 
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.
-```mermaid
-flowchart TD
-    A[make apply] --> B[Create Release: Generates Kubernetes\nsecret with VERSION set to Git commit SHA]
-    B --> C[Apply Manifests: Applies rbac, configmap,\nservices, statefulset using kubectl apply]
-    C --> D[Output Status: Displays status\nof applied resources]
-```
++---------------+     +----------------+     +-----------------+     +---------------+
+|  make apply   | --> |  Create Release| --> | Apply Manifests | --> | Output Status |
++---------------+     +----------------+     +-----------------+     +---------------+
+     |                      |                        |                       |
+     |                      v                        v                       v
+     |               +----------------+       +-----------------+     +---------------+
+     +-------------> | Store Version  |       | Apply Resources |     | Check Status  |
+                     | Secret in K8s  |       | (RBAC/SVC/etc)  |     |               |
+                     +----------------+       +-----------------+     +---------------+
 Every time you run make apply, the Makefile is designed to automatically trigger the create-release target as part of the process. This ensures that a Kubernetes secret is created with the current Git commit SHA, which helps track the version of the app being deployed. By including this step, the Makefile guarantees that the release information is always up-to-date and stored in the cluster whenever the manifests are applied. This makes it easier to identify which version of the app is running and maintain consistency across deployments. Make delete triggers remove-release target.
 
 The `global.param` file contains shared parameters that apply to all environments unless explicitly overridden. For example, it might define default values for `VAULT_NAMESPACE`, `DOCKER_IMAGE`, or resource allocation (`CPU_REQUEST`, `MEMORY_REQUEST`, etc.).
