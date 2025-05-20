@@ -215,7 +215,7 @@ template:
 
 ### Native Integration with CI/CD Pipelines
 
-Makefiles work seamlessly with any CI system (GitHub Actions, GitLab CI) without requiring plugins or custom runners. Each target (make validate, make apply) can be a standalone CI step 11.
+Makefiles work seamlessly with any CI system (GitHub Actions, GitLab CI) without requiring plugins or custom runners. Each target (make validate, make apply) can be a standalone CI step.
 Contrast with Helm/Kustomize, which often need specialized CI steps (e.g., helm template | kubectl apply).
 
 ### Granular Control Over Deployment Order
