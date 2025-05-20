@@ -9,7 +9,7 @@
 - [Kustomize Critique](#kustomize-critique)
 - [Alternative Approaches](#alternative-approaches)
 - [KISS Principles](#kiss-principles)
-- [Constraints](#constraints)
+- [Constrains](#constrains)
 - [Labels](#labels)
 - [Diff](#diff)
 - [Helm Chart Generation](#helm-chart-generation)
