@@ -6,7 +6,8 @@
 - [How It Works](#how-it-works)
 - [Comparasing](#debugging-and-transparency)
 - [Helm](#helm)
-- [Kustomize](#Kustomzie)
+- [Kustomize](#kustomzie)
+- [ArgoCD](#argo)
 - [Other approaches](#other-approaches)
 - [KISS](#kiss)
 - [Constrains](#constrains)
@@ -61,11 +62,41 @@ It supports various patching mechanisms, which require a deep understanding of K
 
 While Kustomize avoids explicit templating, it introduces a level of orchestration that can be just as opaque and requires extensive knowledge to ensure predictable results.
 
----
+## Argo
 
 In many Kubernetes environments, the configuration pipeline has become a complex chain of tools and abstractions. What the Kubernetes API receives — plain YAML or JSON — is often the result of multiple intermediate stages, such as Helm charts, Helmsman, or GitOps systems like Flux or Argo CD. As these layers accumulate, they can obscure the final output, preventing engineers from easily accessing the fully rendered manifests.
 
 This lack of visibility makes it hard to verify what will actually be deployed, leading to operational challenges and a loss of confidence in the system. When teams cannot inspect or reproduce the deployment artifacts, it becomes difficult to review changes or troubleshoot issues, ultimately turning a once-transparent process into a black box that complicates debugging and undermines reliability.
+
+ArgoCD is designed to work with plain Kubernetes manifests, making it naturally compatible with Makefile-generated deployments. Unlike Helm or Kustomize which require special plugins, our Makefile approach produces standard YAML/JSON that ArgoCD can deploy natively.
+
+```mermaid
+graph TD
+    A[Git Repository] -->|Manifests| B(ArgoCD Application)
+    B --> C{Kubernetes Cluster}
+    D[Makefile] -->|Generates| A
+```
+
+Configure ArgoCD Application:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault-app
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/your-org/vault-deployments.git'
+    path: manifests/
+    targetRevision: HEAD
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: vault
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
 
 ## Other approaches
 
