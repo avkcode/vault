@@ -370,46 +370,21 @@ Utility Targets:
 ## How it works
 
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.
-```
-+-------------------+
-|   make apply      |
-+-------------------+
-          |
-          v
-+-------------------+
-| 1. Create Release |
-|   - Generates a   |
-|     Kubernetes    |
-|     secret with   |
-|     VERSION set   |
-|     to Git commit |
-|     SHA.          |
-+-------------------+
-          |
-          v
-+--------------------+
-| 2. Apply Manifests |
-|   - Iterates over  |
-|     the list of    |
-|     manifests      |
-|     (rbac, config- |
-|     map, services, |
-|     statefulset)   |
-|   - Applies each   |
-|     manifest to    |
-|     the cluster    |
-|     using kubectl  |
-|     apply.         |
-+--------------------+
-          |
-          v
-+-------------------+
-| 3. Output Status  |
-|   - Outputs the   |
-|     status of the |
-|     applied       |
-|     resources.    |
-+-------------------+
+```mermaid
+flowchart TD
+    A[make apply] --> B[1. Create Release]
+    B --> C[2. Apply Manifests]
+    C --> D[3. Output Status]
+    
+    subgraph Configuration
+        E[global.param] -->|Shared base config| F[dev.param]
+        F -->|Environment-specific| A
+        G[CLI Overrides] -->|VAULT_NAMESPACE, DOCKER_IMAGE\nREPLICA_NUM, etc.| A
+    end
+    
+    B -->|Creates secret with\nGit commit SHA| H[Kubernetes Cluster]
+    C -->|Applies\nrbac, config-map\nservices, statefulset| H
+    D -->|Shows deployment status| H
 ```
 Every time you run make apply, the Makefile is designed to automatically trigger the create-release target as part of the process. This ensures that a Kubernetes secret is created with the current Git commit SHA, which helps track the version of the app being deployed. By including this step, the Makefile guarantees that the release information is always up-to-date and stored in the cluster whenever the manifests are applied. This makes it easier to identify which version of the app is running and maintain consistency across deployments. Make delete triggers remove-release target.
 
