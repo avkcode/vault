@@ -10,8 +10,8 @@
 - [Alternative Approaches](#alternative-approaches)
 - [KISS Principles](#kiss-principles)
 - [Constraints](#constraints)
-- [Labels](#Labels)
-- [Diff Utilities](#diff-utilities)
+- [Labels](#labels)
+- [Diff](#diff)
 - [Helm Chart Generation](#helm-chart-generation)
 - [Conclusion](#conclusion)
 
