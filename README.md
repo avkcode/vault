@@ -372,21 +372,33 @@ Utility Targets:
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.
 ```mermaid
 flowchart TD
-    A[make apply] --> B[1. Create Release]
-    B --> C[2. Apply Manifests]
-    C --> D[3. Output Status]
+    A[make apply] --> B[Create Release]
+    B --> C[Apply Manifests]
+    C --> D[Output Status]
     
-    subgraph Configuration
-        E[global.param] -->|Shared base config| F[dev.param]
-        F -->|Environment-specific| A
-        G[CLI Overrides] -->|VAULT_NAMESPACE, DOCKER_IMAGE\nREPLICA_NUM, etc.| A
-    end
+    B -->|"Version secret"| K[K8s Cluster]
+    C -->|"RBAC/Config/Deploy"| K
+    D -->|"Status check"| K
     
-    B -->|Creates secret with\nGit commit SHA| H[Kubernetes Cluster]
-    C -->|Applies\nrbac, config-map\nservices, statefulset| H
-    D -->|Shows deployment status| H
+    style A fill:#e6f3ff,stroke:#333
+    style B fill:#e6f3ff,stroke:#333
+    style C fill:#e6f3ff,stroke:#333
+    style D fill:#e6f3ff,stroke:#333
+    style K fill:#fff2cc,stroke:#333
 ```
 Every time you run make apply, the Makefile is designed to automatically trigger the create-release target as part of the process. This ensures that a Kubernetes secret is created with the current Git commit SHA, which helps track the version of the app being deployed. By including this step, the Makefile guarantees that the release information is always up-to-date and stored in the cluster whenever the manifests are applied. This makes it easier to identify which version of the app is running and maintain consistency across deployments. Make delete triggers remove-release target.
+
+```
++---------------+     +----------------+     +-----------------+     +---------------+
+|  make apply   | --> |  Create Release| --> | Apply Manifests | --> | Output Status |
++---------------+     +----------------+     +-----------------+     +---------------+
+     |                      |                        |                       |
+     |                      v                        v                       v
+     |               +----------------+       +-----------------+     +---------------+
+     +-------------> | Store Version  |       | Apply Resources |     | Check Status  |
+                     | Secret in K8s  |       | (RBAC/SVC/etc)  |     |               |
+                     +----------------+       +-----------------+     +---------------+
+```
 
 The `global.param` file contains shared parameters that apply to all environments unless explicitly overridden. For example, it might define default values for `VAULT_NAMESPACE`, `DOCKER_IMAGE`, or resource allocation (`CPU_REQUEST`, `MEMORY_REQUEST`, etc.).
 `global.param`
