@@ -54,7 +54,7 @@ Helm was designed to simplify Kubernetes application deployment, but it has beco
 YAML itself isn’t inherently problematic, and with modern IDE support, schema validation, and linting tools, it can be a clear and effective configuration format. The issues arise when YAML is combined with Go templating, as seen in Helm. While each component is reasonable on its own, their combination creates complexity. Go templates in YAML introduce fragile constructs, where whitespace sensitivity and imperative logic make configurations difficult to read, maintain, and test. This blending of logic and data undermines transparency and predictability, which are crucial in infrastructure management.
 
 Helm's dependency management also adds unnecessary complexity. Dependencies are fetched into a `charts/` directory, but version pinning and overrides often become brittle. Instead of clean component reuse, Helm encourages nested charts with their own `values.yaml`, which complicates customization and requires understanding multiple charts to override a single value. In practice, Helm’s dependency management can feel like nesting shell scripts inside other shell scripts.
-#### No Dependency Hell
+### No Dependency Hell
 
 Helm Problem: Charts often depend on other charts (subcharts), leading to version conflicts and complex dependency resolution.
 Makefile Solution:
@@ -68,7 +68,7 @@ deploy:
     @kubectl apply -f deployment.yaml
 ```
 
-#### No Helm Release Metadata Bloat
+### No Helm Release Metadata Bloat
 
 - **Helm Problem**:
     - Helm stores release metadata in **Secrets/ConfigMaps** (e.g., `sh.helm.release.v1.*`).
@@ -82,7 +82,7 @@ deploy:
 kubectl get secrets -l owner=helm
 ```
 
-#### No Stateful "helm upgrade" Surprises**
+### No Stateful "helm upgrade" Surprises**
 
 - **Helm Problem**:
     - `helm upgrade` sometimes fails due to stateful behavior (e.g., immutable fields).
@@ -92,7 +92,7 @@ kubectl get secrets -l owner=helm
     - Just `kubectl apply -f`—no hidden state.
     - If a change fails, it’s immediately visible in Git diffs.
 
-#### No Need for "helm rollback"
+### No Need for "helm rollback"
 
 - **Helm Problem**:
     - Rollbacks require Helm’s release history.
@@ -107,7 +107,7 @@ git checkout HEAD~1  # Revert to previous version
 make apply           # Re-apply old manifests
 ```
 
-#### No Helm Hook Complexity
+### No Helm Hook Complexity
 
 - **Helm Problem**:
     - Helm hooks (pre-install, post-upgrade) are powerful but opaque.
@@ -122,7 +122,7 @@ pre-check:
     @./scripts/check-dependencies.sh
 ```
 
-#### No Need for "helm-secrets" or External Plugins
+### No Need for "helm-secrets" or External Plugins
 
 - **Helm Problem**:
     - Managing secrets requires plugins like `helm-secrets` (sops/vault).
@@ -136,7 +136,7 @@ create-secret:
     @vault read -field=token secret/vault-token | kubectl create secret generic vault-token --from-file=token=-
 ```
 
-#### No Helm Chart Size Limitations
+### No Helm Chart Size Limitations
 
 - **Helm Problem**:
     - Large charts (e.g., 1000+ resources) slow down `helm install`.
@@ -146,7 +146,7 @@ create-secret:
     - Parallel manifest generation (`make -j`).
     - No artificial limits—just what `kubectl` can handle.
 
-#### No "Helm Delete" Orphaned Resources
+### No "Helm Delete" Orphaned Resources
 
 - **Helm Problem**:
     - `helm delete` sometimes leaves resources behind (e.g., CRDs).
@@ -159,16 +159,6 @@ create-secret:
 delete:
     @kubectl delete -f manifests/
 ```
-
-#### Works Without Kubernetes (for Non-K8s Deployments)
-
-- **Helm Problem**:
-    - Helm is Kubernetes-only.
-        
-- **Makefile Solution**:
-    - Can deploy to VMs, bare metal, or cloud services.
-    - Same toolchain for all infrastructure.
-
 
 ## Advanced Rollback Strategies with Makefiles
 
