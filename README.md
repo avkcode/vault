@@ -752,12 +752,12 @@ endef
 
 Advanced diff capabilities to compare Kubernetes manifests across different states: live cluster vs generated, previous vs current, git revisions, and environments.
 
-diff - Interactive diff menu
-diff-live - Compare live cluster vs generated manifests
-diff-previous - Compare previous vs current manifests
-diff-revisions - Compare between git revisions
-diff-environments - Compare manifests across environments
-diff-params - Compare parameter files between environments
+- diff - Interactive diff menu
+- diff-live - Compare live cluster vs generated manifests
+- diff-previous - Compare previous vs current manifests
+- diff-revisions - Compare between git revisions
+- diff-environments - Compare manifests across environments
+- diff-params - Compare parameter files between environments
 
 [![diff](https://e.radikal.host/2025/04/20/Screenshot-2025-04-20-at-12.34.177b52f3271477030f.png)](https://radikal.host/i/IW7oZX)
 
