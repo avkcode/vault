@@ -56,6 +56,15 @@ What follows is not a prescriptive framework, but rather an examination of core 
 
 This is about getting back to basics - not because simple is trendy, but because simple works. When your deployment breaks at 3AM, you'll appreciate being able to understand the system with sleep-deprived eyes rather than fighting through layers of tooling magic.
 
+### Prerequisites
+
+Before you begin, ensure you have the following tools installed on your system:
+- kubectl: Kubernetes command-line tool.
+- yq: YAML processor.
+- jq: JSON processor.
+- git: Version control system.
+- make: Build automation tool.
+
 ---
 
 [![Back to the Future.](https://e.radikal.host/2025/05/16/1-2.jpg.webp)](https://radikal.host/i/IrPLdQ)
