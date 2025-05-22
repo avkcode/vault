@@ -654,6 +654,60 @@ Utility Targets:
 
 ## How it works
 
+In a Makefile, multiline variables (defined using define) can store arbitrary data such as YAML or JSON, making it convenient to embed Kubernetes manifests or other configuration files directly within the Makefile. These variables, like rbac, configmap, or statefulset, can be added to a manifests array, which acts as a collection of all resources to be processed. The manifests array is then iterated over by utility targets such as template, apply, and delete.
+
+```make
+define configmap
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: ${VAULT_NAMESPACE}
+data:
+  extraconfig-from-values.hcl: |-
+    disable_mlock = true
+    ui = ${VAULT_UI}
+    
+    listener "tcp" {
+      tls_disable = 1
+      address = "[::]:8200"
+      cluster_address = "[::]:8201"
+    }
+    storage "file" {
+      path = "/vault/data"
+    }
+    ${TELEMETRY_CONFIG}
+endef
+export configmap
+```
+
+```make
+manifests += $${rbac}
+manifests += $${configmap}
+manifests += $${services}
+manifests += $${statefulset}
+
+.PHONY: template apply delete
+
+# Outputs the generated Kubernetes manifests to the console.
+template:
+	@$(foreach manifest,$(manifests),echo "$(manifest)";)
+
+# Applies the generated Kubernetes manifests to the cluster using `kubectl apply`.
+apply: create-release
+	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl apply -f - ;)
+
+# Deletes the Kubernetes resources defined in the generated manifests using `kubectl delete`.
+delete: remove-release
+	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl delete -f - ;)
+```
+
+The template target outputs the contents of each manifest to the console for review.
+The apply target pipes each manifest into kubectl apply, deploying the resources to the cluster.
+The delete target pipes each manifest into kubectl delete, removing the resources from the cluster.
+This approach allows for flexible and dynamic management of Kubernetes resources, enabling the inclusion and processing of any number of YAML or JSON configurations stored in multiline variables.
+
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.
 ```
 +---------------+     +----------------+     +-----------------+     +---------------+
