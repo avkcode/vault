@@ -935,7 +935,7 @@ metadata:
 
 Using with manifests:
 ```make
-efine deployment
+define deployment
 ---
 apiVersion: apps/v1
 kind: Deployment
