@@ -15,11 +15,11 @@
   - [No Helm Chart Size Limitations](#no-helm-chart-size-limitations)
   - [No "Helm Delete" Orphaned Resources](#no-helm-delete-orphaned-resources)
 - [Advanced Rollback Strategies with Makefiles](#advanced-rollback-strategies-with-makefiles)
-  - [Atomic Rollbacks with Git Tags](#atomic-rollbacks-with-git-tags)
-  - [Differential Rollback (Partial Reverts)](#differential-rollback-partial-reverts)
-  - [Time-Based Rollback](#time-based-rollback)
-  - [Automated Health-Check Rollback](#automated-health-check-rollback)
-  - [Why This Beats Helm Rollback](#why-this-beats-helm-rollback)
+  - Atomic Rollbacks with Git Tags
+  - Differential Rollback (Partial Reverts
+  - Time-Based Rollback
+  - Automated Health-Check Rollback
+  - Why This Beats Helm Rollback
 - [Kustomize](#kustomize)
 - [ArgoCD](#argocd)
 - [Other Approaches](#other-approaches)
