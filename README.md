@@ -131,7 +131,7 @@ deploy:
 kubectl get secrets -l owner=helm
 ```
 
-### No Stateful "helm upgrade" Surprises**
+### No Stateful "helm upgrade" Surprises
 
 - **Helm Problem**:
     - `helm upgrade` sometimes fails due to stateful behavior (e.g., immutable fields).
