@@ -6,14 +6,14 @@
 
 - [Preface](#preface)
 - [Helm](#helm)
-  - [No Dependency Hell](#no-dependency-hell)
-  - [No Helm Release Metadata Bloat](#no-helm-release-metadata-bloat)
-  - [No Stateful "helm upgrade" Surprises](#no-stateful-helm-upgrade-surprises)
-  - [No Need for "helm rollback"](#no-need-for-helm-rollback)
-  - [No Helm Hook Complexity](#no-helm-hook-complexity)
-  - [No Need for "helm-secrets" or External Plugins](#no-need-for-helm-secrets-or-external-plugins)
-  - [No Helm Chart Size Limitations](#no-helm-chart-size-limitations)
-  - [No "Helm Delete" Orphaned Resources](#no-helm-delete-orphaned-resources)
+  - No Dependency Hell
+  - No Helm Release Metadata Bloat
+  - No Stateful "helm upgrade" Surprises
+  - No Need for "helm rollback"
+  - No Helm Hook Complexity
+  - No Need for "helm-secrets" or External Plugins
+  - No Helm Chart Size Limitations
+  - No "Helm Delete" Orphaned Resources
 - [Advanced Rollback Strategies with Makefiles](#advanced-rollback-strategies-with-makefiles)
   - Atomic Rollbacks with Git Tags
   - Differential Rollback (Partial Reverts
