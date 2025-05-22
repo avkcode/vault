@@ -615,8 +615,12 @@ Can incrementally replace Helm/Kustomize by starting with make helm-template tar
 ---
 
 ### Vault specific targets (vault.mk):
-```make
-make
+
+The include directive in Makefiles allows for modular and organized build systems by nesting multiple Makefiles. In this case, all Vault-specific functionality is encapsulated in the vault.mk file, which can be included in a primary Makefile. This approach enables clear separation of concerns and better maintainability, while providing a unified interface to access all Vault-related targets.
+
+```
+make vault-help
+...
 Available Targets:
   enable-metrics        Enable Prometheus metrics endpoint
   create-backup         Create a manual backup of Vault's Raft storage
