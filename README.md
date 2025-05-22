@@ -800,7 +800,7 @@ get-vault-keys:
 	fi
 ```
 
-## Constrains
+## Constraints
 
 [![Delorean](https://e.radikal.host/2025/05/16/original5.jpg)](https://radikal.host/i/IrSxpr)
 
