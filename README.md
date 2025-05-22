@@ -74,17 +74,29 @@ Before you begin, ensure you have the following tools installed on your system:
 Helm was designed to simplify Kubernetes application deployment, but it has become another abstraction layer that introduces unnecessary complexity. Helm charts often hide the underlying process with layers of Go templating and nested `values.yaml` files, making it difficult to understand what is actually being deployed. Debugging often requires navigating through these files, which can obscure the true configuration. This approach shifts from infrastructure-as-code to something less transparent, making it harder to manage and troubleshoot.
 
 ```yaml
-  imagePullPolicy: {{ .Values.defaultBackend.image.pullPolicy }}
-{{- if .Values.defaultBackend.extraArgs }}
-  args:
-  {{- range $key, $value := .Values.defaultBackend.extraArgs }}
-    {{- /* Accept keys without values or with false as value */}}
-    {{- if eq ($value | quote | len) 2 }}
-    - --{{ $key }}
-    {{- else }}
-    - --{{ $key }}={{ $value }}
-    {{- end }}
+spec:
+  replicas: {{ .replicas | default 1 }}
+  {{- with .strategy }}
+  strategy: {{- include "helpers.tplvalues.render" (dict "value" . "context" $) | nindent 4 }}
   {{- end }}
+  progressDeadlineSeconds: {{ .progressDeadlineSeconds | default 600 }}
+  selector:
+    matchLabels:
+      {{- include "helpers.app.selectorLabels" $ | nindent 6 }}
+      {{- with .extraSelectorLabels }}{{- include "helpers.tplvalues.render" (dict "value" . "context" $) | nindent 6 }}{{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "helpers.app.selectorLabels" $ | nindent 8 }}
+        {{- with .extraSelectorLabels }}{{- include "helpers.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}{{- end }}
+        {{- with $.Values.generic.podLabels }}{{- include "helpers.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}{{- end }}
+        {{- with .podLabels }}{{- include "helpers.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}{{- end }}
+      annotations:
+        {{- with $.Values.generic.podAnnotations }}{{- include "helpers.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}{{- end }}
+        {{- with .podAnnotations }}{{- include "helpers.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}{{- end }}
+    spec:
+      {{- include "helpers.pod" (dict "value" . "general" $general "name" $name "extraLabels" .extraSelectorLabels "context" $) | indent 6 }}
+{{- end }}
 {{- end }}
 ```
 
