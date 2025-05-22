@@ -20,7 +20,7 @@
   - Time-Based Rollback
   - Automated Health-Check Rollback
   - Why This Beats Helm Rollback
-- [Kustomize](#kustomize)
+- [Kustomize](#kustomzie)
 - [ArgoCD](#argocd)
 - [Other Approaches](#other-approaches)
 - [KISS](#kiss)
