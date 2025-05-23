@@ -740,33 +740,6 @@ ENABLE_ISTIO_SIDECAR='false'
 
 ---
 
-The `rbac` variable in the Makefile is defined using the `define` keyword to store a multi-line YAML configuration for Kubernetes RBAC, including a `ServiceAccount` and `ClusterRoleBinding`. The `${VAULT_NAMESPACE}` placeholder is used for dynamic substitution. The variable is exported with `export rbac` and then included in the `manifests` variable. This allows the YAML to be templated with environment variables and reused in targets like `template` and `apply` for Kubernetes deployment.
-
-```make
-define rbac
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: vault-service-account
-  namespace: ${VAULT_NAMESPACE}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: vault-server-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:auth-delegator
-subjects:
-- kind: ServiceAccount
-  name: vault-service-account
-  namespace: ${VAULT_NAMESPACE}
-endef
-export rbac
-```
-
 The dump-manifests target in the Makefile lets you output raw Kubernetes YAML files that can be used in different ways. You can apply these YAML files directly to a cluster using kubectl apply -f, making it easy to deploy changes manually. The same files also work well with tools like ArgoCD, Flux, or Spinnaker, giving you flexibility in how you manage deployments. This approach keeps things simple and avoids being locked into any specific tool or framework. The YAML files show exactly what will be deployed, making it easier to review, back up, or move between environments without surprises.
 
 ---
