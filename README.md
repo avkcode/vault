@@ -767,31 +767,7 @@ endef
 export rbac
 ```
 
-```make
-manifests += $${rbac}
-manifests += $${configmap}
-manifests += $${services}
-manifests += $${statefulset}
-
-.PHONY: template apply delete
-
-template:
-	@$(foreach manifest,$(manifests),echo "$(manifest)";)
-
-apply: create-release
-	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl apply -f - ;)
-
-delete: remove-release
-	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl delete -f - ;)
-
-validate-%:
-	@echo "$$$*" | yq eval -P '.' -
-
-print-%:
-	@echo "$$$*"
-```
-
-The `manifests` array holds the multi-line YAML templates for Kubernetes resources, including RBAC, ConfigMap, Services, and StatefulSet. In the `apply` target, each manifest is processed and passed to `kubectl apply` to deploy them to the Kubernetes cluster. This approach uses `foreach` to iterate over the `manifests` array, applying each resource one by one. Similarly, the `delete` target uses `kubectl delete` to remove the resources defined in the manifests.
+The dump-manifests target in the Makefile lets you output raw Kubernetes YAML files that can be used in different ways. You can apply these YAML files directly to a cluster using kubectl apply -f, making it easy to deploy changes manually. The same files also work well with tools like ArgoCD, Flux, or Spinnaker, giving you flexibility in how you manage deployments. This approach keeps things simple and avoids being locked into any specific tool or framework. The YAML files show exactly what will be deployed, making it easier to review, back up, or move between environments without surprises.
 
 ---
 
