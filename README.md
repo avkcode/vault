@@ -42,6 +42,7 @@
 - [Labels](#labels)
 - [Diff](#diff)
 - [Helm Charts](#helm-charts)
+- [Feature flags](#feature-flags)
 - [Ingress](#ingress)
 - [Conclusion](#conclusion)
 
