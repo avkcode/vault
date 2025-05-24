@@ -1079,15 +1079,7 @@ endif
 | debug-tools   | ✅  | ✅  | ❌  | ❌  |
 
 The real power comes when combining this with the GitOps flow:
-```mermaid
-graph LR
-    A[Developer] -->|PR| B[Feature Flag]
-    B --> C{Environment}
-    C -->|prod| D[Strict Controls]
-    C -->|dev| E[Lenient Settings]
-    D --> F[Auto-Scaling Enabled]
-    E --> G[Debug Tools Available]
-```
+[![Feature Flags](https://e.radikal.host/2025/05/24/Untitled.png)](https://radikal.host/i/MTJaDa)
 
 Git Blame for Infrastructure Changes
 ```
