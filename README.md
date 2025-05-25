@@ -422,6 +422,32 @@ helm template vault --debug | less  # Scroll through rendered YAML
 make template > debug.yaml && code debug.yaml  # Directly inspect
 ```
 
+### Dependency Graph Generator
+
+```make
+# Generate visual dependency graph
+graph:
+	@echo "digraph G {"
+	@echo "  rankdir=LR;"
+	@echo "  node [shape=box];"
+	@$(foreach t,$(shell make -qp | awk -F':' '/^[a-zA-Z0-9][^$$#\/\t=]*:([^=]|$$)/ {print $$1}'),\
+		echo "  \"$(t)\" [label=\"$(t)\n$(lastword $(subst /, ,$(t)))\"];")
+	@make -qp | awk -F':' '/^[a-zA-Z0-9][^$$#\/\t=]*:([^=]|$$)/ {print $$1}' | \
+	while read t; do \
+		make -qp | awk -v target="$$t" -F':' '$$1 == target {print $$2}' | \
+		xargs -n 1 | grep -v '^\.' | \
+		while read d; do \
+			echo "  \"$$t\" -> \"$$d\";"; \
+		done; \
+	done
+	@echo "}"
+```
+
+Generate PNG:
+```
+make graph | dot -Tpng -o graph.png && open graph.png
+```
+
 ### **Security Implications**
 
 - **Helm**: Dynamic templating can introduce injection risks (e.g., untrusted `values.yaml`). Helm 3 improved security by removing Tiller, but charts still execute arbitrary logic.
