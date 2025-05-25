@@ -1095,9 +1095,11 @@ show-release:
 
 ## Validate
 
-### Validation Targets
+The Makefile-based validation approach provides a clear and direct method for ensuring the correctness of Kubernetes manifests. Unlike Helm which often obscures the actual YAML behind layers of templating logic and requires specific commands like helm template or helm lint to validate charts, the Makefile approach allows for explicit validation of individual manifests using standard tools like yq. This makes it easier to identify and fix issues since there are no hidden abstractions or complex dependency chains to navigate.
 
-The Makefile provides several targets for validating Kubernetes manifests to ensure correctness before deployment. These targets utilize `yq` and `kubectl` for both structural validation and Kubernetes API compatibility checks.
+The validation process in Makefiles is tightly integrated with the deployment workflow. Specific targets like validate-% enable focused validation of particular resources while server-side and client-side validation targets provide comprehensive checks against the Kubernetes API. These validation steps can be seamlessly incorporated into CI/CD pipelines without requiring additional tooling or plugins, offering a more native and flexible solution compared to Helm's specialized requirements.
+
+Furthermore, the Makefile approach avoids complications such as Helm release metadata bloat or stateful upgrade surprises that can interfere with validation. Since manifests remain in their raw form and changes are tracked through Git, the validation process benefits from version control transparency and an immutable history. This ensures that any rollback or differential validation is straightforward and reliable, unlike Helm's dependency on internal state stored in cluster secrets. The result is a simpler yet robust validation mechanism that aligns with the principle of keeping Kubernetes deployments transparent and maintainable.
 
 ### Specific Manifest Validation
 
