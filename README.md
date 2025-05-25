@@ -43,6 +43,7 @@
 - [Diff](#diff)
 - [Helm Charts](#helm-charts)
 - [Releases](#releases)
+- [Validate](#validate)
 - [Feature flags](#feature-flags)
 - [Ingress](#ingress)
 - [Conclusion](#conclusion)
@@ -1092,6 +1093,48 @@ show-release:
 	kubectl get secret $$SECRET_NAME -o jsonpath='{.data.version\.json}' | base64 --decode | jq -r .VERSION
 ```
 
+## Validate
+
+# Validation Targets
+
+The Makefile provides several targets for validating Kubernetes manifests to ensure correctness before deployment. These targets utilize `yq` and `kubectl` for both structural validation and Kubernetes API compatibility checks.
+
+## Specific Manifest Validation
+
+The `validate-%` target allows validation of individual manifests. It takes a manifest name as an argument and processes it through `yq` to check its structure and syntax.
+
+```make
+validate-%:
+    @echo "$$$*" | yq eval -P '.' -
+```
+
+### Server-Side Validation
+
+The validate-server target performs server-side validation of all manifests against the Kubernetes API. This ensures that manifests are compatible with the actual cluster configuration. Each manifest is converted to JSON using yq and then validated using kubectl apply with the --dry-run=server option.
+```make
+.PHONY: validate-server
+validate-server:
+	@echo "Validating JSON manifests against the Kubernetes API (server-side validation)..."
+	@$(foreach manifest,$(manifests), \
+		echo "Validating manifest: $(manifest)" && \
+		printf '%s' "$(manifest)" | yq eval -o=json -P '.' - | kubectl apply --dry-run=server -f - || exit 1; \
+	)
+	@echo "All JSON manifests passed server-side validation successfully."
+```
+
+### Client-Side Validation
+
+The validate-client target conducts client-side validation of all manifests against the Kubernetes API. Similar to server-side validation, each manifest is converted to JSON format and checked using kubectl apply but with the --dry-run=client option. This provides a quick validation without contacting the API server.
+```make
+.PHONY: validate-client
+validate-client:
+	@echo "Validating JSON manifests against the Kubernetes API (client-side validation)..."
+	@$(foreach manifest,$(manifests), \
+		echo "Validating manifest: $(manifest)" && \
+		printf '%s' "$(manifest)" | yq eval -o=json -P '.' - | kubectl apply --dry-run=client -f - || exit 1; \
+	)
+	@echo "All JSON manifests passed client-side validation successfully."
+```
 
 ## Feature flags
 
