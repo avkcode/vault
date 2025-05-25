@@ -422,6 +422,25 @@ helm template vault --debug | less  # Scroll through rendered YAML
 make template > debug.yaml && code debug.yaml  # Directly inspect
 ```
 
+With makefile-based approach:
+```make
+# Print any variable - usage: make print-VARIABLE
+print-%:
+	@echo '$*=$($*)'
+	@echo '  origin = $(origin $*)'
+	@echo '  flavor = $(flavor $*)'
+	@echo '  value  = $(value $*)'
+```
+
+Example:
+```
+make print-DOCKER_IMAGE
+DOCKER_IMAGE=hashicorp/vault:1.18.0
+  origin: file
+  flavor: recursive
+  value: hashicorp/vault:1.18.0
+```
+
 ### Dependency Graph Generator
 
 ```make
