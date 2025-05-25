@@ -683,6 +683,11 @@ endef
 export configmap
 ```
 
+The template target outputs the contents of each manifest to the console for review.
+The apply target pipes each manifest into kubectl apply, deploying the resources to the cluster.
+The delete target pipes each manifest into kubectl delete, removing the resources from the cluster.
+This approach allows for flexible and dynamic management of Kubernetes resources, enabling the inclusion and processing of any number of YAML or JSON configurations stored in multiline variables.
+
 ```make
 manifests += $${rbac}
 manifests += $${configmap}
@@ -703,11 +708,6 @@ apply: create-release
 delete: remove-release
 	@$(foreach manifest,$(manifests),echo "$(manifest)" | kubectl delete -f - ;)
 ```
-
-The template target outputs the contents of each manifest to the console for review.
-The apply target pipes each manifest into kubectl apply, deploying the resources to the cluster.
-The delete target pipes each manifest into kubectl delete, removing the resources from the cluster.
-This approach allows for flexible and dynamic management of Kubernetes resources, enabling the inclusion and processing of any number of YAML or JSON configurations stored in multiline variables.
 
 When you run make apply, several steps are executed in sequence to apply the Kubernetes manifests to your cluster.
 ```
