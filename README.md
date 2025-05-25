@@ -1095,11 +1095,11 @@ show-release:
 
 ## Validate
 
-# Validation Targets
+### Validation Targets
 
 The Makefile provides several targets for validating Kubernetes manifests to ensure correctness before deployment. These targets utilize `yq` and `kubectl` for both structural validation and Kubernetes API compatibility checks.
 
-## Specific Manifest Validation
+### Specific Manifest Validation
 
 The `validate-%` target allows validation of individual manifests. It takes a manifest name as an argument and processes it through `yq` to check its structure and syntax.
 
