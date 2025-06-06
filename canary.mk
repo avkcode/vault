@@ -10,6 +10,7 @@ PRODUCTION_LABEL := stable
 CANARY_INSTANCE_NAME ?= vault-canary
 CANARY_SERVICE_NAME ?= vault-service-canary
 CANARY_VALIDATION_TIMEOUT ?= 300s
+ENABLE_ISTIO_SIDECAR ?= false
 
 # Validate required variables
 check-vault-namespace:
@@ -112,7 +113,7 @@ canary-validate: check-vault-namespace
 		exit 1; \
 	fi
 	@echo "Checking canary service is accessible..."
-	@if ! kubectl exec -it -n $(VAULT_NAMESPACE) $$(kubectl get pod -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) -o jsonpath='{.items[0].metadata.name}') -- curl -s http://localhost:8200/v1/sys/health > /dev/null; then \
+	@if ! kubectl exec -n $(VAULT_NAMESPACE) $$(kubectl get pod -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) -o jsonpath='{.items[0].metadata.name}') -- curl -s http://localhost:8200/v1/sys/health > /dev/null; then \
 		echo "Error: Canary service health check failed"; \
 		exit 1; \
 	fi
@@ -126,10 +127,15 @@ canary-validate-promote: canary-validate canary-promote
 canary-metrics: check-vault-namespace
 	@echo "=== Canary Deployment Metrics ==="
 	@echo "Resource usage:"
-	@kubectl top pods -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME)
+	@kubectl top pods -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) 2>/dev/null || echo "kubectl top command failed - metrics-server may not be installed"
 	@echo ""
 	@echo "Logs (last 20 lines):"
-	@kubectl logs -n $(VAULT_NAMESPACE) $$(kubectl get pod -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) -o jsonpath='{.items[0].metadata.name}') --tail=20
+	@CANARY_POD=$$(kubectl get pod -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); \
+	if [ -n "$$CANARY_POD" ]; then \
+		kubectl logs -n $(VAULT_NAMESPACE) $$CANARY_POD --tail=20 2>/dev/null || echo "Failed to get logs for canary pod"; \
+	else \
+		echo "No canary pods found"; \
+	fi
 	@echo ""
 	@if command -v istioctl &> /dev/null && [ "$(ENABLE_ISTIO_SIDECAR)" = "true" ]; then \
 		echo "Istio traffic metrics:"; \
@@ -147,18 +153,19 @@ canary-cleanup: check-vault-namespace
 canary-help:
 	@echo ""
 	@echo "Canary Deployment Targets:"
-	@echo "  canary-init            Label current deployment as stable (prerequisite for canary)"
-	@echo "  canary-deploy          Deploy canary version with reduced replicas and traffic"
-	@echo "  canary-promote         Promote canary version to production"
-	@echo "  canary-rollback        Rollback canary deployment"
-	@echo "  canary-traffic         Configure traffic splitting between canary and production"
-	@echo "  canary-status          Show status of canary and production deployments"
-	@echo "  canary-validate        Run validation tests against canary deployment"
-	@echo "  canary-validate-promote Validate and automatically promote if successful"
-	@echo "  canary-metrics         Show metrics for canary deployment"
-	@echo "  canary-cleanup         Remove all canary resources"
+	@printf "  %-25s %s\n" "canary-init" "Label current deployment as stable (prerequisite for canary)"
+	@printf "  %-25s %s\n" "canary-deploy" "Deploy canary version with reduced replicas and traffic"
+	@printf "  %-25s %s\n" "canary-promote" "Promote canary version to production"
+	@printf "  %-25s %s\n" "canary-rollback" "Rollback canary deployment"
+	@printf "  %-25s %s\n" "canary-traffic" "Configure traffic splitting between canary and production"
+	@printf "  %-25s %s\n" "canary-status" "Show status of canary and production deployments"
+	@printf "  %-25s %s\n" "canary-validate" "Run validation tests against canary deployment"
+	@printf "  %-25s %s\n" "canary-validate-promote" "Validate and automatically promote if successful"
+	@printf "  %-25s %s\n" "canary-metrics" "Show metrics for canary deployment"
+	@printf "  %-25s %s\n" "canary-cleanup" "Remove all canary resources"
 	@echo ""
 	@echo "Configuration Variables:"
-	@echo "  CANARY_REPLICAS=$(CANARY_REPLICAS)"
-	@echo "  CANARY_TRAFFIC_PERCENTAGE=$(CANARY_TRAFFIC_PERCENTAGE)"
-	@echo "  CANARY_VALIDATION_TIMEOUT=$(CANARY_VALIDATION_TIMEOUT)"
+	@printf "  %-25s %s\n" "CANARY_REPLICAS" "$(CANARY_REPLICAS)"
+	@printf "  %-25s %s\n" "CANARY_TRAFFIC_PERCENTAGE" "$(CANARY_TRAFFIC_PERCENTAGE)"
+	@printf "  %-25s %s\n" "CANARY_VALIDATION_TIMEOUT" "$(CANARY_VALIDATION_TIMEOUT)"
+	@printf "  %-25s %s\n" "ENABLE_ISTIO_SIDECAR" "$(ENABLE_ISTIO_SIDECAR)"
