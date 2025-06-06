@@ -67,30 +67,32 @@ canary-rollback: check-vault-namespace
 
 ## canary-traffic: Configure traffic splitting between canary and production
 canary-traffic: check-vault-namespace
-ifeq ($(ENABLE_ISTIO_SIDECAR),true)
-	@echo "Configuring Istio traffic splitting ($(CANARY_TRAFFIC_PERCENTAGE)% to canary)"
-	@echo "apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
-metadata:
-  name: vault
-  namespace: $(VAULT_NAMESPACE)
-spec:
-  hosts:
-  - vault-service
-  http:
-  - route:
-    - destination:
-        host: vault-service
-        subset: $(PRODUCTION_LABEL)
-      weight: $(shell expr 100 - $(CANARY_TRAFFIC_PERCENTAGE))
-    - destination:
-        host: vault-service
-        subset: $(CANARY_LABEL)
-      weight: $(CANARY_TRAFFIC_PERCENTAGE)" | kubectl apply -f -
-else
-	@echo "Istio not enabled (ENABLE_ISTIO_SIDECAR=false), using Kubernetes native service for canary"
-	@echo "Canary will receive traffic via: $(CANARY_SERVICE_NAME).$(VAULT_NAMESPACE).svc.cluster.local"
-endif
+	@if [ "$(ENABLE_ISTIO_SIDECAR)" = "true" ]; then \
+		echo "Configuring Istio traffic splitting ($(CANARY_TRAFFIC_PERCENTAGE)% to canary)"; \
+		cat <<EOF | kubectl apply -f - \
+apiVersion: networking.istio.io/v1alpha3 \
+kind: VirtualService \
+metadata: \
+  name: vault \
+  namespace: $(VAULT_NAMESPACE) \
+spec: \
+  hosts: \
+  - vault-service \
+  http: \
+  - route: \
+    - destination: \
+        host: vault-service \
+        subset: $(PRODUCTION_LABEL) \
+      weight: $$(( 100 - $(CANARY_TRAFFIC_PERCENTAGE) )) \
+    - destination: \
+        host: vault-service \
+        subset: $(CANARY_LABEL) \
+      weight: $(CANARY_TRAFFIC_PERCENTAGE) \
+EOF \
+	else \
+		echo "Istio not enabled (ENABLE_ISTIO_SIDECAR=false), using Kubernetes native service for canary"; \
+		echo "Canary will receive traffic via: $(CANARY_SERVICE_NAME).$(VAULT_NAMESPACE).svc.cluster.local"; \
+	fi
 
 ## canary-status: Show status of canary and production deployments
 canary-status: check-vault-namespace
@@ -118,8 +120,10 @@ canary-validate: check-vault-namespace
 		echo "Error: No canary pods found"; \
 		exit 1; \
 	fi; \
-	if ! kubectl exec -n $(VAULT_NAMESPACE) $$CANARY_POD -- sh -c "command -v curl >/dev/null && curl -s http://localhost:8200/v1/sys/health || wget -q -O- http://localhost:8200/v1/sys/health" > /dev/null 2>&1; then \
+	HEALTH_CHECK_CMD="if command -v curl >/dev/null 2>&1; then curl -s http://localhost:8200/v1/sys/health; elif command -v wget >/dev/null 2>&1; then wget -q -O- http://localhost:8200/v1/sys/health; else echo 'Neither curl nor wget found'; exit 1; fi"; \
+	if ! kubectl exec -n $(VAULT_NAMESPACE) $$CANARY_POD -- sh -c "$$HEALTH_CHECK_CMD" > /dev/null 2>&1; then \
 		echo "Error: Canary service health check failed"; \
+		kubectl describe pod -n $(VAULT_NAMESPACE) $$CANARY_POD; \
 		exit 1; \
 	fi
 	@echo "Canary validation passed"
@@ -138,9 +142,13 @@ canary-metrics: check-vault-namespace
 	@kubectl get pods -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) 2>/dev/null || echo "No canary pods found"
 	@echo ""
 	@echo "Logs (last 20 lines):"
-	@CANARY_POD=$$(kubectl get pod -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); \
-	if [ -n "$$CANARY_POD" ]; then \
-		kubectl logs -n $(VAULT_NAMESPACE) $$CANARY_POD --tail=20 2>/dev/null || echo "Failed to get logs for canary pod"; \
+	@CANARY_PODS=$$(kubectl get pods -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); \
+	if [ -n "$$CANARY_PODS" ]; then \
+		for pod in $$CANARY_PODS; do \
+			echo "Pod: $$pod"; \
+			kubectl logs -n $(VAULT_NAMESPACE) $$pod --tail=20 2>/dev/null || echo "Failed to get logs for pod $$pod"; \
+			echo "---"; \
+		done; \
 	else \
 		echo "No canary pods found"; \
 	fi
