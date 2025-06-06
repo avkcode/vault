@@ -69,8 +69,6 @@ Before you begin, ensure you have the following tools installed on your system:
 
 ---
 
-[![Back to the Future](https://e.radikal.host/2025/05/16/i-might-be-very-late-realize-this-but-i-just-found-they-v0-rekrb8d8ngja1.jpg.webp)](https://radikal.host/i/IrPiQD)
-
 ## Helm
 
 Helm was designed to simplify Kubernetes application deployment, but it has become another abstraction layer that introduces unnecessary complexity. Helm charts often hide the underlying process with layers of Go templating and nested `values.yaml` files, making it difficult to understand what is actually being deployed. Debugging often requires navigating through these files, which can obscure the true configuration. This approach shifts from infrastructure-as-code to something less transparent, making it harder to manage and troubleshoot.
