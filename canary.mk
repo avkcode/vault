@@ -82,7 +82,7 @@ spec:
     - destination:
         host: vault-service
         subset: $(PRODUCTION_LABEL)
-      weight: $$(( 100 - $(CANARY_TRAFFIC_PERCENTAGE) ))
+      weight: $(shell expr 100 - $(CANARY_TRAFFIC_PERCENTAGE))
     - destination:
         host: vault-service
         subset: $(CANARY_LABEL)
@@ -113,7 +113,12 @@ canary-validate: check-vault-namespace
 		exit 1; \
 	fi
 	@echo "Checking canary service is accessible..."
-	@if ! kubectl exec -n $(VAULT_NAMESPACE) $$(kubectl get pod -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) -o jsonpath='{.items[0].metadata.name}') -- curl -s http://localhost:8200/v1/sys/health > /dev/null; then \
+	@CANARY_POD=$$(kubectl get pod -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); \
+	if [ -z "$$CANARY_POD" ]; then \
+		echo "Error: No canary pods found"; \
+		exit 1; \
+	fi; \
+	if ! kubectl exec -n $(VAULT_NAMESPACE) $$CANARY_POD -- sh -c "command -v curl >/dev/null && curl -s http://localhost:8200/v1/sys/health || wget -q -O- http://localhost:8200/v1/sys/health" > /dev/null 2>&1; then \
 		echo "Error: Canary service health check failed"; \
 		exit 1; \
 	fi
@@ -128,6 +133,9 @@ canary-metrics: check-vault-namespace
 	@echo "=== Canary Deployment Metrics ==="
 	@echo "Resource usage:"
 	@kubectl top pods -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) 2>/dev/null || echo "kubectl top command failed - metrics-server may not be installed"
+	@echo ""
+	@echo "Pods:"
+	@kubectl get pods -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) 2>/dev/null || echo "No canary pods found"
 	@echo ""
 	@echo "Logs (last 20 lines):"
 	@CANARY_POD=$$(kubectl get pod -n $(VAULT_NAMESPACE) -l app.kubernetes.io/instance=$(CANARY_INSTANCE_NAME) -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); \
