@@ -1,6 +1,4 @@
---
-[![Back to the Future](https://e.radikal.host/2025/05/16/i-might-be-very-late-realize-this-but-i-just-found-they-v0-rekrb8d8ngja1.jpg.webp)](https://radikal.host/i/IrPiQD)
-*Back to the Future.*
+[![228d8437-278a-4632-843a-72a33e5d4cfb.png](https://e.radikal.host/2025/06/06/228d8437-278a-4632-843a-72a33e5d4cfb.png)](https://radikal.host/i/Mt40IA)
 
 ## Table of Contents
 
@@ -71,7 +69,8 @@ Before you begin, ensure you have the following tools installed on your system:
 
 ---
 
-[![Back to the Future.](https://e.radikal.host/2025/05/16/1-2.jpg.webp)](https://radikal.host/i/IrPLdQ)
+[![Back to the Future](https://e.radikal.host/2025/05/16/i-might-be-very-late-realize-this-but-i-just-found-they-v0-rekrb8d8ngja1.jpg.webp)](https://radikal.host/i/IrPiQD)
+
 ## Helm
 
 Helm was designed to simplify Kubernetes application deployment, but it has become another abstraction layer that introduces unnecessary complexity. Helm charts often hide the underlying process with layers of Go templating and nested `values.yaml` files, making it difficult to understand what is actually being deployed. Debugging often requires navigating through these files, which can obscure the true configuration. This approach shifts from infrastructure-as-code to something less transparent, making it harder to manage and troubleshoot.
@@ -358,8 +357,6 @@ Apple’s [pkl](https://pkl-lang.org/index.html) (short for "Pickle") is a con
 However, the complexity of pkl may be unnecessary. Its extensive documentation and wide range of features may be overkill for most use cases, especially when YAML itself can handle configuration management needs.
 ## KISS
 
-[![Delorean](https://e.radikal.host/2025/05/16/original.jpg)
-
 Kubernetes configuration management is ultimately a string manipulation problem. Makefiles, combined with standard Unix tools, are ideal for solving this. Make provides a declarative way to define steps to generate Kubernetes manifests, with each step clearly outlined and only re-run when necessary. Tools like `sed`, `awk`, `cat`, and `jq` excel at text transformation and complement Make’s simplicity, allowing for quick manipulation of YAML or JSON files.
 
 This approach is transparent — you can see exactly what each command does and debug easily when needed. Unlike more complex tools, which hide the underlying processes, Makefiles and Unix tools provide full control, making the configuration management process straightforward and maintainable.
@@ -439,32 +436,6 @@ DOCKER_IMAGE=hashicorp/vault:1.18.0
   origin: file
   flavor: recursive
   value: hashicorp/vault:1.18.0
-```
-
-### Dependency Graph Generator
-
-```make
-# Generate visual dependency graph
-graph:
-	@echo "digraph G {"
-	@echo "  rankdir=LR;"
-	@echo "  node [shape=box];"
-	@$(foreach t,$(shell make -qp | awk -F':' '/^[a-zA-Z0-9][^$$#\/\t=]*:([^=]|$$)/ {print $$1}'),\
-		echo "  \"$(t)\" [label=\"$(t)\n$(lastword $(subst /, ,$(t)))\"];")
-	@make -qp | awk -F':' '/^[a-zA-Z0-9][^$$#\/\t=]*:([^=]|$$)/ {print $$1}' | \
-	while read t; do \
-		make -qp | awk -v target="$$t" -F':' '$$1 == target {print $$2}' | \
-		xargs -n 1 | grep -v '^\.' | \
-		while read d; do \
-			echo "  \"$$t\" -> \"$$d\";"; \
-		done; \
-	done
-	@echo "}"
-```
-
-Generate PNG:
-```
-make graph | dot -Tpng -o graph.png && open graph.png
 ```
 
 ### **Security Implications**
@@ -854,8 +825,6 @@ get-vault-keys:
 ```
 
 ## Constraints
-
-[![Delorean](https://e.radikal.host/2025/05/16/original5.jpg)](https://radikal.host/i/IrSxpr)
 
 When managing complex workflows, especially in DevOps or Kubernetes environments, constraints play a vital role in ensuring consistency, preventing errors, and maintaining control over the build process. In Makefiles, constraints can be implemented to validate inputs, restrict environment configurations, and enforce best practices. Let’s explore how this works with a practical example.
 
