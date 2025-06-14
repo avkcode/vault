@@ -1,5 +1,3 @@
-[![228d8437-278a-4632-843a-72a33e5d4cfb.png](https://e.radikal.host/2025/06/06/228d8437-278a-4632-843a-72a33e5d4cfb.png)](https://radikal.host/i/Mt40IA)
-
 ## Table of Contents
 
 - [Preface](#preface)
